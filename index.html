@@ -345,38 +345,24 @@
       
         
           
-            <p>#Redis安装</p>
-<p>##1.redis的源码压缩包上传到linux目录下<br>我使用的是 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">##2.解压以上压缩包到/usr/local中，如下：</span><br><span class="line">```redis-4.0.2</span><br></pre></td></tr></table></figure></p>
+            <h1 id="Redis安装"><a href="#Redis安装" class="headerlink" title="Redis安装"></a>Redis安装</h1><h2 id="1-redis的源码压缩包上传到linux目录下"><a href="#1-redis的源码压缩包上传到linux目录下" class="headerlink" title="1.redis的源码压缩包上传到linux目录下"></a>1.redis的源码压缩包上传到linux目录下</h2><p>我使用的是 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## 2.解压以上压缩包到/usr/local中，如下：</span><br><span class="line">```redis-4.0.2</span><br></pre></td></tr></table></figure></p>
 <p>因为redis是C语言编写的，所以一般目录下会有一个Makefile文件，使用make命令可以对源码进行编译，如下图：</p>
 <img src="/2018/02/05/Redis学习笔记（一）/redis1-01.png">
-<p>##3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；</p>
-<p>##4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-02.png">
-<p>#Redis启动连接</p>
-<p>##1.前端启动<br>在/usr/local/redis/bin目录下，使用./redis-server启动redis；</p>
-<p>##2.后端启动</p>
-<p>###首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-03.png">
-<p>###启动redis<br>./redis-server redis.conf</p>
-<p>###查看是否启动<br>ps -aux|grep redis<br>如下图：</p>
+<h2 id="3-使用make对源码进行编译，直接在-usr-local-redis-4-0-2目录下执行make命令；"><a href="#3-使用make对源码进行编译，直接在-usr-local-redis-4-0-2目录下执行make命令；" class="headerlink" title="3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；"></a>3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；</h2><h2 id="4-仍然在当前目录下，输入make-install-PREFIX-usr-local-redis-进行安装操作，其中PREFIX是安装目录，一般安装到-usr-local-redis目录下，如果redis目录不存在，会自动创建，如下图："><a href="#4-仍然在当前目录下，输入make-install-PREFIX-usr-local-redis-进行安装操作，其中PREFIX是安装目录，一般安装到-usr-local-redis目录下，如果redis目录不存在，会自动创建，如下图：" class="headerlink" title="4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图："></a>4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图：</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-02.png">
+<h1 id="Redis启动连接"><a href="#Redis启动连接" class="headerlink" title="Redis启动连接"></a>Redis启动连接</h1><h2 id="1-前端启动"><a href="#1-前端启动" class="headerlink" title="1.前端启动"></a>1.前端启动</h2><p>在/usr/local/redis/bin目录下，使用./redis-server启动redis；</p>
+<h2 id="2-后端启动"><a href="#2-后端启动" class="headerlink" title="2.后端启动"></a>2.后端启动</h2><h3 id="首先拷贝源文件目录下的redis-conf配置文件到-usr-local-redis-bin目录下，编辑redis-conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图："><a href="#首先拷贝源文件目录下的redis-conf配置文件到-usr-local-redis-bin目录下，编辑redis-conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：" class="headerlink" title="首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图："></a>首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-03.png">
+<h3 id="启动redis"><a href="#启动redis" class="headerlink" title="启动redis"></a>启动redis</h3><p>./redis-server redis.conf</p>
+<h3 id="查看是否启动"><a href="#查看是否启动" class="headerlink" title="查看是否启动"></a>查看是否启动</h3><p>ps -aux|grep redis<br>如下图：</p>
 <img src="/2018/02/05/Redis学习笔记（一）/redis1-04.png">
-<p>##3.需要注意的问题</p>
-<p>###基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-05.png">
+<h2 id="3-需要注意的问题"><a href="#3-需要注意的问题" class="headerlink" title="3.需要注意的问题"></a>3.需要注意的问题</h2><h3 id="基于安全的考虑，redis默认bind的ip是本机127-0-0-1，所以只能在本机进行连接redis，连接方式如下图："><a href="#基于安全的考虑，redis默认bind的ip是本机127-0-0-1，所以只能在本机进行连接redis，连接方式如下图：" class="headerlink" title="基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图："></a>基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-05.png">
 <p>此时为默认连接localhost，端口为6379的redis服务</p>
-<p>###如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-06.png">
-<p>###如果报以下错误，如何解决：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-07.png">
+<h3 id="如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing-192-168-1-1-192-168-1-2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图："><a href="#如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing-192-168-1-1-192-168-1-2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：" class="headerlink" title="如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图："></a>如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-06.png">
+<h3 id="如果报以下错误，如何解决："><a href="#如果报以下错误，如何解决：" class="headerlink" title="如果报以下错误，如何解决："></a>如果报以下错误，如何解决：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-07.png">
 <p>以上截图大概意思是redis开启了保护模式，其实在redis3.2版本之后，redis.conf配置文件中多了个protected-mode属性，默认值为yes，表示开启了保护模式。<br>可通过两种方式解决：<br><br><em>直接关闭保护模式，将值改为no；<br><br></em>配置bind，或者设置密码，放开requirepass属性，值即为密码，如下图：</p>
 <img src="/2018/02/05/Redis学习笔记（一）/redis1-08.png">
-<p>###可以在/etc/rc.local中配置开机自启动</p>
-<p>##4.日志存储，可修改为自定义目录，如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-09.png">
-<p>##5.数据文件存储，可修改为自定义目录，如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-10.png">
-<p>##6.报错解决：/bin/sh: cc: command not found</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-11.png">
+<h3 id="可以在-etc-rc-local中配置开机自启动"><a href="#可以在-etc-rc-local中配置开机自启动" class="headerlink" title="可以在/etc/rc.local中配置开机自启动"></a>可以在/etc/rc.local中配置开机自启动</h3><h2 id="4-日志存储，可修改为自定义目录，如下图："><a href="#4-日志存储，可修改为自定义目录，如下图：" class="headerlink" title="4.日志存储，可修改为自定义目录，如下图："></a>4.日志存储，可修改为自定义目录，如下图：</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-09.png">
+<h2 id="5-数据文件存储，可修改为自定义目录，如下图："><a href="#5-数据文件存储，可修改为自定义目录，如下图：" class="headerlink" title="5.数据文件存储，可修改为自定义目录，如下图："></a>5.数据文件存储，可修改为自定义目录，如下图：</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-10.png">
+<h2 id="6-报错解决：-bin-sh-cc-command-not-found"><a href="#6-报错解决：-bin-sh-cc-command-not-found" class="headerlink" title="6.报错解决：/bin/sh: cc: command not found"></a>6.报错解决：/bin/sh: cc: command not found</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-11.png">
 <p>以上报错，是由于新的linux系统中没有安装gcc环境，需要安装gcc，可以直接使用yum install gcc安装，安装步骤如下：<br><br><em>安装<br><br>yum install gcc<br><br></em>验证是否安装成功<br><br>rpm -qa | grep gcc<br><br>删除原redis解压目录，重新解压，编译安装</p>
 
           
