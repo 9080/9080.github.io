@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="JWT,单点登录,SSO," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="首先介绍一下什么是JSON Web Token（JWT）？官方文档是这样解释的：JSON Web Token（JWT）是一个开放标准（RFC 7519），它定义了一种紧凑且独立的方式，可以在各方之间作为JSON对象安全地传输信息。此信息可以通过数字签名进行验证和信任。JWT可以使用秘密（使用HMAC算法）或使用RSA或ECDSA的公钥/私钥对进行签名。虽然JWT可以加密以在各方之间提供保密，但只将">
+<meta name="keywords" content="JWT,单点登录,SSO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用JWT实现单点登录（完全跨域方案）">
+<meta property="og:url" content="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/index.html">
+<meta property="og:site_name" content="Helon">
+<meta property="og:description" content="首先介绍一下什么是JSON Web Token（JWT）？官方文档是这样解释的：JSON Web Token（JWT）是一个开放标准（RFC 7519），它定义了一种紧凑且独立的方式，可以在各方之间作为JSON对象安全地传输信息。此信息可以通过数字签名进行验证和信任。JWT可以使用秘密（使用HMAC算法）或使用RSA或ECDSA的公钥/私钥对进行签名。虽然JWT可以加密以在各方之间提供保密，但只将">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-01.jpg">
+<meta property="og:image" content="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-02.jpg">
+<meta property="og:updated_time" content="2018-09-10T08:53:04.156Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用JWT实现单点登录（完全跨域方案）">
+<meta name="twitter:description" content="首先介绍一下什么是JSON Web Token（JWT）？官方文档是这样解释的：JSON Web Token（JWT）是一个开放标准（RFC 7519），它定义了一种紧凑且独立的方式，可以在各方之间作为JSON对象安全地传输信息。此信息可以通过数字签名进行验证和信任。JWT可以使用秘密（使用HMAC算法）或使用RSA或ECDSA的公钥/私钥对进行签名。虽然JWT可以加密以在各方之间提供保密，但只将">
+<meta name="twitter:image" content="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-01.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/"/>
+
+
+
+
+
+  <title>使用JWT实现单点登录（完全跨域方案） | Helon</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Helon</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">奋力求索，砥砺前行，爱拼才会赢</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helon">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helon">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">使用JWT实现单点登录（完全跨域方案）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-10T16:52:32+08:00">
+                2018-09-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/架构/" itemprop="url" rel="index">
+                    <span itemprop="name">架构</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="首先介绍一下什么是JSON-Web-Token（JWT）？"><a href="#首先介绍一下什么是JSON-Web-Token（JWT）？" class="headerlink" title="首先介绍一下什么是JSON Web Token（JWT）？"></a>首先介绍一下什么是JSON Web Token（JWT）？</h2><p><em>官方文档是这样解释的</em>：JSON Web Token（JWT）是一个开放标准（RFC 7519），它定义了一种紧凑且独立的方式，可以在各方之间作为JSON对象安全地传输信息。此信息可以通过数字签名进行验证和信任。JWT可以使用秘密（使用HMAC算法）或使用RSA或ECDSA的公钥/私钥对进行签名。<br>虽然JWT可以加密以在各方之间提供保密，但只将专注于签名令牌。签名令牌可以验证其中包含的声明的完整性，而加密令牌则隐藏其他方的声明。当使用公钥/私钥对签署令牌时，签名还证明只有持有私钥的一方是签署私钥的一方。</p>
+<p>通俗来讲，JWT是一个含签名并携带用户相关信息的加密串，页面请求校验登录接口时，请求头中携带JWT串到后端服务，后端通过签名加密串匹配校验，保证信息未被篡改。校验通过则认为是可靠的请求，将正常返回数据。</p>
+<h2 id="什么情况下使用JWT比较适合？"><a href="#什么情况下使用JWT比较适合？" class="headerlink" title="什么情况下使用JWT比较适合？"></a>什么情况下使用JWT比较适合？</h2><ul>
+<li>授权：这是最常见的使用场景，解决单点登录问题。因为JWT使用起来轻便，开销小，服务端不用记录用户状态信息（无状态），所以使用比较广泛；</li>
+<li>信息交换：JWT是在各个服务之间安全传输信息的好方法。因为JWT可以签名，例如，使用公钥/私钥对儿 - 可以确定请求方是合法的。此外，由于使用标头和有效负载计算签名，还可以验证内容是否未被篡改。<h2 id="JWT的结构体是什么样的？"><a href="#JWT的结构体是什么样的？" class="headerlink" title="JWT的结构体是什么样的？"></a>JWT的结构体是什么样的？</h2>JWT由三部分组成，分别是头信息、有效载荷、签名，中间以（.）分隔，如下格式：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xxx.yyy.zzz</span><br></pre></td></tr></table></figure>
+<p><strong>header（头信息）</strong><br>由两部分组成，令牌类型（即：JWT）、散列算法（HMAC、RSASSA、RSASSA-PSS等），例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;alg&quot;: &quot;HS256&quot;,</span><br><span class="line">  &quot;typ&quot;: &quot;JWT&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，这个JSON被编码为Base64Url，形成JWT的第一部分。</p>
+<p><strong>Payload（有效载荷）</strong><br>JWT的第二部分是payload，其中包含claims。claims是关于实体（常用的是用户信息）和其他数据的声明，claims有三种类型： registered, public, and private claims。<br><strong>Registered claims：</strong> 这些是一组预定义的claims，非强制性的，但是推荐使用， iss（发行人）， exp（到期时间）， sub（主题）， aud（观众）等；<br><strong>Public claims:</strong> 自定义claims，注意不要和JWT注册表中属性冲突，<a href="https://www.iana.org/assignments/jwt/jwt.xhtml" target="_blank" rel="noopener">这里可以查看JWT注册表</a><br><strong>Private claims:</strong> 这些是自定义的claims，用于在同意使用这些claims的各方之间共享信息，它们既不是Registered claims，也不是Public claims。<br><strong>以下是payload示例：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;sub&quot;: &quot;1234567890&quot;,</span><br><span class="line">  &quot;name&quot;: &quot;John Doe&quot;,</span><br><span class="line">  &quot;admin&quot;: true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，再经过Base64Url编码，形成JWT的第二部分；</p>
+<p><em>注意：对于签名令牌，此信息虽然可以防止篡改，但任何人都可以读取。除非加密，否则不要将敏感信息放入到Payload或Header元素中。</em></p>
+<p><strong>Signature</strong><br>要创建签名部分，必须采用编码的Header，编码的Payload，秘钥，Header中指定的算法，并对其进行签名。<br>例如，如果要使用HMAC SHA256算法，将按以下方式创建签名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HMACSHA256(</span><br><span class="line">  base64UrlEncode(header) + &quot;.&quot; +</span><br><span class="line">  base64UrlEncode(payload),</span><br><span class="line">  secret)</span><br></pre></td></tr></table></figure>
+<p>签名用于验证消息在此过程中未被篡改，并且，在使用私钥签名令牌的情况下，它还可以验证JWT的请求方是否是它所声明的请求方。<br>输出是三个由点分隔的Base64-URL字符串，可以在HTML和HTTP环境中轻松传递，与SAML等基于XML的标准相比更加紧凑。<br>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.</span><br><span class="line">eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.</span><br><span class="line">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</span><br></pre></td></tr></table></figure>
+<h2 id="JWT工作机制？"><a href="#JWT工作机制？" class="headerlink" title="JWT工作机制？"></a>JWT工作机制？</h2><p>在身份验证中，当用户使用其凭据成功登录时，将返回JSON Web Token（即：JWT）。由于令牌是凭证，因此必须非常小心以防止出现安全问题。一般情况下，不应将令牌保留的时间超过要求。理论上超时时间越短越好。</p>
+<p>每当用户想要访问受保护的路由或资源时，用户代理应该使用Bearer模式发送JWT，通常在Authorization header中。标题内容应如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Authorization: Bearer &lt;token&gt;</span><br></pre></td></tr></table></figure>
+<p>在某些情况下，这可以作为无状态授权机制。服务器的受保护路由将检查Authorization header中的有效JWT ，如果有效，则允许用户访问受保护资源。如果JWT包含必要的数据，则可以减少查询数据库或缓存信息。<br>如果在Authorization header中发送令牌，则跨域资源共享（CORS）将不会成为问题，因为它不使用cookie。</p>
+<p><em>注意：使用签名令牌，虽然他们无法更改，但是令牌中包含的所有信息都会向用户或其他方公开。这意味着不应该在令牌中放置敏感信息。</em></p>
+<h2 id="使用JWT的好处是什么？"><a href="#使用JWT的好处是什么？" class="headerlink" title="使用JWT的好处是什么？"></a>使用JWT的好处是什么？</h2><p>相比<strong>Simple Web Tokens (SWT)（简单Web令牌）</strong> and <strong>Security Assertion Markup Language Tokens (SAML)（安全断言标记语言令牌）</strong>；</p>
+<ul>
+<li>JWT比SAML更简洁，在HTML和HTTP环境中传递更方便；</li>
+<li>在安全方面，SWT只能使用HMAC算法通过共享密钥对称签名。但是，JWT和SAML令牌可以使用X.509证书形式的公钥/私钥对进行签名。与签名JSON的简单性相比，使用XML数字签名可能会存在安全漏洞；</li>
+<li>JSON解析成对象相比XML更流行、方便。</li>
+</ul>
+<h2 id="以下是我实际项目中的应用分析"><a href="#以下是我实际项目中的应用分析" class="headerlink" title="以下是我实际项目中的应用分析"></a>以下是我实际项目中的应用分析</h2><p>首先看一下大致的架构及流程图：<br><img src="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-01.jpg"><br><img src="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-02.jpg"></p>
+<p><strong>主要有以下三步：</strong></p>
+<ul>
+<li>项目一开始我先封装了一个JWTHelper工具包，主要提供了生成JWT、解析JWT以及校验JWT的方法，其他还有一些加密相关操作，稍后我会以代码的形式介绍下代码。工具包写好后我将打包上传到私服，能够随时依赖下载使用；</li>
+<li>接下来，我在客户端项目中依赖JWTHelper工具包，并添加Interceptor拦截器，拦截需要校验登录的接口。拦截器中校验JWT有效性，并在response中重新设置JWT的新值；</li>
+<li>最后在JWT服务端，依赖JWT工具包，在登录方法中，需要在登录校验成功后调用生成JWT方法，生成一个JWT令牌并且设置到response的header中。</li>
+</ul>
+<p><strong>以下是部分代码分享：</strong></p>
+<ul>
+<li><strong>JwtHelper工具类：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: JWT工具类</span><br><span class="line"> * 参考官网：https://jwt.io/</span><br><span class="line"> * JWT的数据结构为：A.B.C三部分数据，由字符点&quot;.&quot;分割成三部分数据</span><br><span class="line"> * A-header头信息</span><br><span class="line"> * B-payload 有效负荷 一般包括：已注册信息（registered claims），公开数据(public claims)，私有数据(private claims)</span><br><span class="line"> * C-signature 签名信息 是将header和payload进行加密生成的</span><br><span class="line"> * @Data: Created in 2018/7/19 14:11</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">public class JwtHelper &#123;</span><br><span class="line"></span><br><span class="line">    private static Logger logger = LoggerFactory.getLogger(JwtHelper.class);</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 生成JWT字符串</span><br><span class="line">     * 格式：A.B.C</span><br><span class="line">     * A-header头信息</span><br><span class="line">     * B-payload 有效负荷</span><br><span class="line">     * C-signature 签名信息 是将header和payload进行加密生成的</span><br><span class="line">     * @param userId - 用户编号</span><br><span class="line">     * @param userName - 用户名</span><br><span class="line">     * @param identities - 客户端信息（变长参数），目前包含浏览器信息，用于客户端拦截器校验，防止跨域非法访问</span><br><span class="line">     * @Data: 2018/7/28 19:26</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String generateJWT(String userId, String userName, String ...identities) &#123;</span><br><span class="line">        //签名算法，选择SHA-256</span><br><span class="line">        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;</span><br><span class="line">        //获取当前系统时间</span><br><span class="line">        long nowTimeMillis = System.currentTimeMillis();</span><br><span class="line">        Date now = new Date(nowTimeMillis);</span><br><span class="line">        //将BASE64SECRET常量字符串使用base64解码成字节数组</span><br><span class="line">        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(SecretConstant.BASE64SECRET);</span><br><span class="line">        //使用HmacSHA256签名算法生成一个HS256的签名秘钥Key</span><br><span class="line">        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());</span><br><span class="line">        //添加构成JWT的参数</span><br><span class="line">        Map&lt;String, Object&gt; headMap = new HashMap&lt;&gt;();</span><br><span class="line">        /*</span><br><span class="line">            Header</span><br><span class="line">            &#123;</span><br><span class="line">              &quot;alg&quot;: &quot;HS256&quot;,</span><br><span class="line">              &quot;typ&quot;: &quot;JWT&quot;</span><br><span class="line">            &#125;</span><br><span class="line">         */</span><br><span class="line">        headMap.put(&quot;alg&quot;, SignatureAlgorithm.HS256.getValue());</span><br><span class="line">        headMap.put(&quot;typ&quot;, &quot;JWT&quot;);</span><br><span class="line">        JwtBuilder builder = Jwts.builder().setHeader(headMap)</span><br><span class="line">                /*</span><br><span class="line">                    Payload</span><br><span class="line">                    &#123;</span><br><span class="line">                      &quot;userId&quot;: &quot;1234567890&quot;,</span><br><span class="line">                      &quot;userName&quot;: &quot;John Doe&quot;,</span><br><span class="line">                    &#125;</span><br><span class="line">                 */</span><br><span class="line">                //加密后的客户编号</span><br><span class="line">                .claim(&quot;userId&quot;, AESSecretUtil.encryptToStr(userId, SecretConstant.DATAKEY))</span><br><span class="line">                //客户名称</span><br><span class="line">                .claim(&quot;userName&quot;, userName)</span><br><span class="line">                //客户端浏览器信息</span><br><span class="line">                .claim(&quot;userAgent&quot;, identities[0])</span><br><span class="line">                //Signature</span><br><span class="line">                .signWith(signatureAlgorithm, signingKey);</span><br><span class="line">        //添加Token过期时间</span><br><span class="line">        if (SecretConstant.EXPIRESSECOND &gt;= 0) &#123;</span><br><span class="line">            long expMillis = nowTimeMillis + SecretConstant.EXPIRESSECOND;</span><br><span class="line">            Date expDate = new Date(expMillis);</span><br><span class="line">            builder.setExpiration(expDate).setNotBefore(now);</span><br><span class="line">        &#125;</span><br><span class="line">        return builder.compact();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 解析JWT</span><br><span class="line">     * 返回Claims对象</span><br><span class="line">     * @param jsonWebToken - JWT</span><br><span class="line">     * @Data: 2018/7/28 19:25</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static Claims parseJWT(String jsonWebToken) &#123;</span><br><span class="line">        Claims claims = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (StringUtils.isNotBlank(jsonWebToken)) &#123;</span><br><span class="line">                //解析jwt</span><br><span class="line">                claims = Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary(SecretConstant.BASE64SECRET))</span><br><span class="line">                        .parseClaimsJws(jsonWebToken).getBody();</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                logger.warn(&quot;[JWTHelper]-json web token 为空&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            logger.error(&quot;[JWTHelper]-JWT解析异常：可能因为token已经超时或非法token&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return claims;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 校验JWT是否有效</span><br><span class="line">     * 返回json字符串的demo:</span><br><span class="line">     * &#123;&quot;freshToken&quot;:&quot;A.B.C&quot;,&quot;userName&quot;:&quot;Judy&quot;,&quot;userId&quot;:&quot;123&quot;, &quot;userAgent&quot;:&quot;xxxx&quot;&#125;</span><br><span class="line">     * freshToken-刷新后的jwt</span><br><span class="line">     * userName-客户名称</span><br><span class="line">     * userId-客户编号</span><br><span class="line">     * userAgent-客户端浏览器信息</span><br><span class="line">     * @param jsonWebToken - JWT</span><br><span class="line">     * @Data: 2018/7/24 15:28</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String validateLogin(String jsonWebToken) &#123;</span><br><span class="line">        Map&lt;String, Object&gt; retMap = null;</span><br><span class="line">        Claims claims = parseJWT(jsonWebToken);</span><br><span class="line">        if (claims != null) &#123;</span><br><span class="line">            //解密客户编号</span><br><span class="line">            String decryptUserId = AESSecretUtil.decryptToStr((String)claims.get(&quot;userId&quot;), SecretConstant.DATAKEY);</span><br><span class="line">            retMap = new HashMap&lt;&gt;();</span><br><span class="line">            //加密后的客户编号</span><br><span class="line">            retMap.put(&quot;userId&quot;, decryptUserId);</span><br><span class="line">            //客户名称</span><br><span class="line">            retMap.put(&quot;userName&quot;, claims.get(&quot;userName&quot;));</span><br><span class="line">            //客户端浏览器信息</span><br><span class="line">            retMap.put(&quot;userAgent&quot;, claims.get(&quot;userAgent&quot;));</span><br><span class="line">            //刷新JWT</span><br><span class="line">            retMap.put(&quot;freshToken&quot;, generateJWT(decryptUserId, (String)claims.get(&quot;userName&quot;), (String)claims.get(&quot;userAgent&quot;), (String)claims.get(&quot;domainName&quot;)));</span><br><span class="line">        &#125;else &#123;</span><br><span class="line">            logger.warn(&quot;[JWTHelper]-JWT解析出claims为空&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return retMap!=null?JSONObject.toJSONString(retMap):null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">       String jsonWebKey = generateJWT(&quot;123&quot;, &quot;Judy&quot;,</span><br><span class="line">               &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36&quot;);</span><br><span class="line">       System.out.println(jsonWebKey);</span><br><span class="line">       Claims claims =  parseJWT(jsonWebKey);</span><br><span class="line">        System.out.println(claims);</span><br><span class="line">       System.out.println(validateLogin(jsonWebKey));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>AES加密工具类：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: AES加密工具类</span><br><span class="line"> * @Data: Created in 2018/7/28 18:38</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">public class AESSecretUtil &#123;</span><br><span class="line"></span><br><span class="line">    /**秘钥的大小*/</span><br><span class="line">    private static final int KEYSIZE = 128;</span><br><span class="line">    </span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES加密</span><br><span class="line">     * @param data - 待加密内容</span><br><span class="line">     * @param key - 加密秘钥</span><br><span class="line">     * @Data: 2018/7/28 18:42</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static byte[] encrypt(String data, String key) &#123;</span><br><span class="line">        if(StringUtils.isNotBlank(data))&#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                KeyGenerator keyGenerator = KeyGenerator.getInstance(&quot;AES&quot;);</span><br><span class="line">                //选择一种固定算法，为了避免不同java实现的不同算法，生成不同的密钥，而导致解密失败</span><br><span class="line">                SecureRandom random = SecureRandom.getInstance(&quot;SHA1PRNG&quot;);</span><br><span class="line">                random.setSeed(key.getBytes());</span><br><span class="line">                keyGenerator.init(KEYSIZE, random);</span><br><span class="line">                SecretKey secretKey = keyGenerator.generateKey();</span><br><span class="line">                byte[] enCodeFormat = secretKey.getEncoded();</span><br><span class="line">                SecretKeySpec secretKeySpec = new SecretKeySpec(enCodeFormat, &quot;AES&quot;);</span><br><span class="line">                Cipher cipher = Cipher.getInstance(&quot;AES&quot;);// 创建密码器</span><br><span class="line">                byte[] byteContent = data.getBytes(&quot;utf-8&quot;);</span><br><span class="line">                cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);// 初始化</span><br><span class="line">                byte[] result = cipher.doFinal(byteContent);</span><br><span class="line">                return result; // 加密</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES加密，返回String</span><br><span class="line">     * @param data - 待加密内容</span><br><span class="line">     * @param key - 加密秘钥</span><br><span class="line">     * @Data: 2018/7/28 18:59</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String encryptToStr(String data, String key)&#123;</span><br><span class="line"></span><br><span class="line">        return StringUtils.isNotBlank(data)?parseByte2HexStr(encrypt(data, key)):null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES解密</span><br><span class="line">     * @param data - 待解密字节数组</span><br><span class="line">     * @param key - 秘钥</span><br><span class="line">     * @Data: 2018/7/28 19:01</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static byte[] decrypt(byte[] data, String key) &#123;</span><br><span class="line">        if (ArrayUtils.isNotEmpty(data)) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                KeyGenerator keyGenerator = KeyGenerator.getInstance(&quot;AES&quot;);</span><br><span class="line">                //选择一种固定算法，为了避免不同java实现的不同算法，生成不同的密钥，而导致解密失败</span><br><span class="line">                SecureRandom random = SecureRandom.getInstance(&quot;SHA1PRNG&quot;);</span><br><span class="line">                random.setSeed(key.getBytes());</span><br><span class="line">                keyGenerator.init(KEYSIZE, random);</span><br><span class="line">                SecretKey secretKey = keyGenerator.generateKey();</span><br><span class="line">                byte[] enCodeFormat = secretKey.getEncoded();</span><br><span class="line">                SecretKeySpec secretKeySpec = new SecretKeySpec(enCodeFormat, &quot;AES&quot;);</span><br><span class="line">                Cipher cipher = Cipher.getInstance(&quot;AES&quot;);// 创建密码器</span><br><span class="line">                cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);// 初始化</span><br><span class="line">                byte[] result = cipher.doFinal(data);</span><br><span class="line">                return result; // 加密</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES解密，返回String</span><br><span class="line">     * @param enCryptdata - 待解密字节数组</span><br><span class="line">     * @param key - 秘钥</span><br><span class="line">     * @Data: 2018/7/28 19:01</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String decryptToStr(String enCryptdata, String key) &#123;</span><br><span class="line">        return StringUtils.isNotBlank(enCryptdata)?new String(decrypt(parseHexStr2Byte(enCryptdata), key)):null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 将二进制转换成16进制</span><br><span class="line">     * @param buf - 二进制数组</span><br><span class="line">     * @Data: 2018/7/28 19:12</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String parseByte2HexStr(byte buf[]) &#123;</span><br><span class="line">        StringBuffer sb = new StringBuffer();</span><br><span class="line">        for (int i = 0; i &lt; buf.length; i++) &#123;</span><br><span class="line">            String hex = Integer.toHexString(buf[i] &amp; 0xFF);</span><br><span class="line">            if (hex.length() == 1) &#123;</span><br><span class="line">                hex = &apos;0&apos; + hex;</span><br><span class="line">            &#125;</span><br><span class="line">            sb.append(hex.toUpperCase());</span><br><span class="line">        &#125;</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 将16进制转换为二进制</span><br><span class="line">     * @param hexStr - 16进制字符串</span><br><span class="line">     * @Data: 2018/7/28 19:13</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static byte[] parseHexStr2Byte(String hexStr) &#123;</span><br><span class="line">        if (hexStr.length() &lt; 1)</span><br><span class="line">            return null;</span><br><span class="line">        byte[] result = new byte[hexStr.length()/2];</span><br><span class="line">        for (int i = 0;i&lt; hexStr.length()/2; i++) &#123;</span><br><span class="line">            int high = Integer.parseInt(hexStr.substring(i*2, i*2+1), 16);</span><br><span class="line">            int low = Integer.parseInt(hexStr.substring(i*2+1, i*2+2), 16);</span><br><span class="line">            result[i] = (byte) (high * 16 + low);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        String ss = encryptToStr(&quot;eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxMjMiLCJ1c2VyTmFtZSI6Ikp1ZHkiLCJleHAiOjE1MzI3Nzk2MjIsIm5iZiI6MTUzMjc3NzgyMn0.sIw_leDZwG0pJ8ty85Iecd_VXjObYutILNEwPUyeVSo&quot;, SecretConstant.DATAKEY);</span><br><span class="line">        System.out.println(ss);</span><br><span class="line">        System.out.println(decryptToStr(ss, SecretConstant.DATAKEY));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>所使用的常量类：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: JWT使用常量值</span><br><span class="line"> * @Data: Created in 2018/7/27 14:37</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">public class SecretConstant &#123;</span><br><span class="line"></span><br><span class="line">    //签名秘钥 自定义</span><br><span class="line">    public static final String BASE64SECRET = &quot;***********&quot;;</span><br><span class="line"></span><br><span class="line">    //超时毫秒数（默认30分钟）</span><br><span class="line">    public static final int EXPIRESSECOND = 1800000;</span><br><span class="line"></span><br><span class="line">    //用于JWT加密的密匙 自定义</span><br><span class="line">    public static final String DATAKEY = &quot;************&quot;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>客户端pom依赖：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!--jwt工具类--&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.chtwm.component&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;jwt-helper&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;xxx&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>客户端拦截器：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: 校验是否登录拦截器</span><br><span class="line"> * @Data: Created in 2018/7/30 14:30</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">@Slf4j</span><br><span class="line">public class ValidateLoginInterceptor implements HandlerInterceptor &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception &#123;</span><br><span class="line">        //首先从请求头中获取jwt串，与页面约定好存放jwt值的请求头属性名为User-Token</span><br><span class="line">        String jwt = httpServletRequest.getHeader(&quot;User-Token&quot;);</span><br><span class="line">        log.info(&quot;[登录校验拦截器]-从header中获取的jwt为:&#123;&#125;&quot;, jwt);</span><br><span class="line">        //判断jwt是否有效</span><br><span class="line">        if(StringUtils.isNotBlank(jwt))&#123;</span><br><span class="line">            //校验jwt是否有效,有效则返回json信息，无效则返回空</span><br><span class="line">            String retJson = JwtHelper.validateLogin(jwt);</span><br><span class="line">            log.info(&quot;[登录校验拦截器]-校验JWT有效性返回结果:&#123;&#125;&quot;, retJson);</span><br><span class="line">            //retJSON为空则说明jwt超时或非法</span><br><span class="line">            if(StringUtils.isNotBlank(retJson))&#123;</span><br><span class="line">                JSONObject jsonObject = JSONObject.parseObject(retJson);</span><br><span class="line">                //校验客户端信息</span><br><span class="line">                String userAgent = httpServletRequest.getHeader(&quot;User-Agent&quot;);</span><br><span class="line">                if (userAgent.equals(jsonObject.getString(&quot;userAgent&quot;))) &#123;</span><br><span class="line">                    //获取刷新后的jwt值，设置到响应头中</span><br><span class="line">                    httpServletResponse.setHeader(&quot;User-Token&quot;, jsonObject.getString(&quot;freshToken&quot;));</span><br><span class="line">                    //将客户编号设置到session中</span><br><span class="line">                    httpServletRequest.getSession().setAttribute(GlobalConstant.SESSION_CUSTOMER_NO_KEY, jsonObject.getString(&quot;userId&quot;));</span><br><span class="line">                    return true;</span><br><span class="line">                &#125;else&#123;</span><br><span class="line">                    log.warn(&quot;[登录校验拦截器]-客户端浏览器信息与JWT中存的浏览器信息不一致，重新登录。当前浏览器信息:&#123;&#125;&quot;, userAgent);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                log.warn(&quot;[登录校验拦截器]-JWT非法或已超时，重新登录&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        //输出响应流</span><br><span class="line">        JSONObject jsonObject = new JSONObject();</span><br><span class="line">        jsonObject.put(&quot;hmac&quot;, &quot;&quot;);</span><br><span class="line">        jsonObject.put(&quot;status&quot;, &quot;&quot;);</span><br><span class="line">        jsonObject.put(&quot;code&quot;, &quot;4007&quot;);</span><br><span class="line">        jsonObject.put(&quot;msg&quot;, &quot;未登录&quot;);</span><br><span class="line">        jsonObject.put(&quot;data&quot;, &quot;&quot;);</span><br><span class="line">        httpServletResponse.setCharacterEncoding(&quot;UTF-8&quot;);</span><br><span class="line">        httpServletResponse.setContentType(&quot;application/json; charset=utf-8&quot;);</span><br><span class="line">        httpServletResponse.getOutputStream().write(jsonObject.toJSONString().getBytes(&quot;UTF-8&quot;));</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>客户端拦截器在XML文件中配置：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;!--拦截器配置--&gt;</span><br><span class="line">   &lt;mvc:interceptors&gt;</span><br><span class="line">       &lt;mvc:interceptor&gt;</span><br><span class="line">        &lt;!--需拦截url配置--&gt;</span><br><span class="line">           &lt;mvc:exclude-mapping path=&quot;/api/aa/bb/**&quot; /&gt;</span><br><span class="line">           &lt;mvc:exclude-mapping path=&quot;/api/aa/cc/test&quot; /&gt;</span><br><span class="line">           &lt;bean id=&quot;validateLoginInterceptor&quot; class=&quot;com.xxx.ValidateLoginInterceptor&quot; /&gt;</span><br><span class="line">       &lt;/mvc:interceptor&gt;</span><br><span class="line">   &lt;/mvc:interceptors&gt;</span><br></pre></td></tr></table></figure>
+<p>到此，后台服务的配置已经完成，下一步就需要前端页面将JWT令牌从response响应头中取出，然后存入localstorage或cookie中。但是遇到跨域场景，处理起来就会比较复杂，因为一旦在浏览器中跨域将获取不到localstorage中的JWT令牌。例如<a href="http://www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage（[参考博文](https://www.cnblogs.com/tyrion1990/p/8134384.html)），具体我使用代码分享的方式来分析。" target="_blank" rel="noopener">www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage（[参考博文](https://www.cnblogs.com/tyrion1990/p/8134384.html)），具体我使用代码分享的方式来分析。</a></p>
+<ul>
+<li><strong>前端页面js代码（服务端）：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">/**CURD本地存储信息 start**/</span><br><span class="line">      (function(doc,win)&#123;</span><br><span class="line">          var fn=function()&#123;&#125;;</span><br><span class="line">          fn.prototype=&#123;</span><br><span class="line">              /*本地数据存储 t:cookie有效时间，单位s; domain:cookie存储所属的domain域*/</span><br><span class="line">              setLocalCookie: function (k, v, t,domain) &#123;</span><br><span class="line">                  //如果当前浏览器不支持localStorage将存储在cookie中</span><br><span class="line">                  typeof window.localStorage !== &quot;undefined&quot; ? localStorage.setItem(k, v) :</span><br><span class="line">                      (function () &#123;</span><br><span class="line">                          t = t || 365 * 12 * 60 * 60;</span><br><span class="line">                          domain=domain?domain:&quot;.jwtserver.com&quot;;</span><br><span class="line">                          document.cookie = k + &quot;=&quot; + v + &quot;;max-age=&quot; + t+&quot;;domain=&quot;+domain+&quot;;path=/&quot;;</span><br><span class="line">                      &#125;)()</span><br><span class="line">              &#125;,</span><br><span class="line">              /*获取本地存储数据*/</span><br><span class="line">              getLocalCookie: function (k) &#123;</span><br><span class="line">                  k = k || &quot;localDataTemp&quot;;</span><br><span class="line">                  return typeof window.localStorage !== &quot;undefined&quot; ? localStorage.getItem(k) :</span><br><span class="line">                      (function () &#123;</span><br><span class="line">                          var all = document.cookie.split(&quot;;&quot;);</span><br><span class="line">                          var cookieData = &#123;&#125;;</span><br><span class="line">                          for (var i = 0, l = all.length; i &lt; l; i++) &#123;</span><br><span class="line">                              var p = all[i].indexOf(&quot;=&quot;);</span><br><span class="line">                              var dataName = all[i].substring(0, p).replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,&quot;&quot;);</span><br><span class="line">                              cookieData[dataName] = all[i].substring(p + 1);</span><br><span class="line">                          &#125;</span><br><span class="line">                          return cookieData[k]</span><br><span class="line">                      &#125;)();</span><br><span class="line">              &#125;,</span><br><span class="line">              /*删除本地存储数据*/</span><br><span class="line">              clearLocalData: function (k) &#123;</span><br><span class="line">                  k = k || &quot;localDataTemp&quot;;</span><br><span class="line">                  typeof window.localStorage !== &quot;undefined&quot; ? localStorage.removeItem(k) :</span><br><span class="line">                      (function () &#123;</span><br><span class="line">                          document.cookie = k + &quot;=temp&quot; + &quot;;max-age=0&quot;;</span><br><span class="line">                      &#125;)()</span><br><span class="line">              &#125;,</span><br><span class="line">              init:function()&#123;</span><br><span class="line">                  this.bindEvent();</span><br><span class="line">              &#125;,</span><br><span class="line">              //事件绑定</span><br><span class="line">              bindEvent:function()&#123;</span><br><span class="line">                  var _this=this;</span><br><span class="line">                  win.addEventListener(&quot;message&quot;,function(evt)&#123;</span><br><span class="line">                      if(win.parent!=evt.source)&#123;return&#125;</span><br><span class="line">                      var options=JSON.parse(evt.data);</span><br><span class="line">                      if(options.type==&quot;GET&quot;)&#123;</span><br><span class="line">                          var data=tools.getLocalCookie(options.key);</span><br><span class="line">                          win.parent.postMessage(data, &quot;*&quot;);</span><br><span class="line">                      &#125;</span><br><span class="line">                      options.type==&quot;SET&quot;&amp;&amp;_this.setLocalCookie(options.key,options.value);</span><br><span class="line">                      options.type==&quot;REM&quot;&amp;&amp;_this.clearLocalData(options.key);</span><br><span class="line">                  &#125;,false)</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;;</span><br><span class="line">          var tools=new fn();</span><br><span class="line">          tools.init();</span><br><span class="line">      &#125;)(document,window);</span><br><span class="line">      /**CURD本地存储信息 end**/</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>前端页面js代码（客户端）：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//页面初始化向iframe域名发送消息</span><br><span class="line">window.onload = function() &#123;</span><br><span class="line">    console.log(&apos;get key value......................&apos;)</span><br><span class="line">    window.frames[0].postMessage(JSON.stringify(&#123;type:&quot;GET&quot;,key:&quot;User-Token&quot;&#125;),&apos;*&apos;);</span><br><span class="line">&#125;</span><br><span class="line">//监听message信息，接收从iframe域下获取到的token信息，然后存储到localstorage或cookie中</span><br><span class="line">window.addEventListener(&apos;message&apos;, function(e) &#123;</span><br><span class="line">    console.log(&apos;listen.....&apos;);</span><br><span class="line">    var data = e.data;</span><br><span class="line">    console.log(data);</span><br><span class="line">    if(data != null)&#123;</span><br><span class="line">        localStorage.setItem(&quot;User-Token&quot;, data);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, false);</span><br></pre></td></tr></table></figure>
+<p><strong>总结：</strong><br>优点：在非跨域环境下使用JWT机制是一个非常不错的选择，实现方式简单，操作方便，能够快速实现。由于服务端不存储用户状态信息，因此大用户量，对后台服务也不会造成压力；<br>缺点：跨域实现相对比较麻烦，安全性也有待探讨。因为JWT令牌返回到页面中，可以使用js获取到，如果遇到XSS攻击令牌可能会被盗取，在JWT还没超时的情况下，就会被获取到敏感数据信息。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Helon 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Helon 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JWT/" rel="tag"># JWT</a>
+          
+            <a href="/tags/单点登录/" rel="tag"># 单点登录</a>
+          
+            <a href="/tags/SSO/" rel="tag"># SSO</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/06/Linux常用命令（二）/" rel="next" title="Linux常用命令（二）">
+                <i class="fa fa-chevron-left"></i> Linux常用命令（二）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="Helon" />
+            
+              <p class="site-author-name" itemprop="name">Helon</p>
+              <p class="site-description motion-element" itemprop="description">求高志者得中志，求中志者得小志，求小志者将不得志</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#首先介绍一下什么是JSON-Web-Token（JWT）？"><span class="nav-number">1.</span> <span class="nav-text">首先介绍一下什么是JSON Web Token（JWT）？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#什么情况下使用JWT比较适合？"><span class="nav-number">2.</span> <span class="nav-text">什么情况下使用JWT比较适合？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JWT的结构体是什么样的？"><span class="nav-number">3.</span> <span class="nav-text">JWT的结构体是什么样的？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JWT工作机制？"><span class="nav-number">4.</span> <span class="nav-text">JWT工作机制？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用JWT的好处是什么？"><span class="nav-number">5.</span> <span class="nav-text">使用JWT的好处是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#以下是我实际项目中的应用分析"><span class="nav-number">6.</span> <span class="nav-text">以下是我实际项目中的应用分析</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Helon</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

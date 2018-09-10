@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="OPS,Linux," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="vim文本编辑1.less less test.txt，分屏打开内容，空格往后打开，b向上返回。  ####2.head  head test.txt，默认显示文本开头10行； head -3 test.txt，显示文本开头3行；  ####3.tail  tail test.txt，默认打开文本最后10行； tail -f test.txt,流式显示； tail -3 test.txt，显示tx">
+<meta name="keywords" content="OPS,Linux">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux常用命令（二）">
+<meta property="og:url" content="https://9080.github.io/2018/02/06/Linux常用命令（二）/index.html">
+<meta property="og:site_name" content="Helon">
+<meta property="og:description" content="vim文本编辑1.less less test.txt，分屏打开内容，空格往后打开，b向上返回。  ####2.head  head test.txt，默认显示文本开头10行； head -3 test.txt，显示文本开头3行；  ####3.tail  tail test.txt，默认打开文本最后10行； tail -f test.txt,流式显示； tail -3 test.txt，显示tx">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-10T08:52:28.664Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux常用命令（二）">
+<meta name="twitter:description" content="vim文本编辑1.less less test.txt，分屏打开内容，空格往后打开，b向上返回。  ####2.head  head test.txt，默认显示文本开头10行； head -3 test.txt，显示文本开头3行；  ####3.tail  tail test.txt，默认打开文本最后10行； tail -f test.txt,流式显示； tail -3 test.txt，显示tx">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://9080.github.io/2018/02/06/Linux常用命令（二）/"/>
+
+
+
+
+
+  <title>Linux常用命令（二） | Helon</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Helon</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">奋力求索，砥砺前行，爱拼才会赢</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2018/02/06/Linux常用命令（二）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helon">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helon">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux常用命令（二）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-06T10:25:32+08:00">
+                2018-02-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="vim文本编辑"><a href="#vim文本编辑" class="headerlink" title="vim文本编辑"></a>vim文本编辑</h2><h4 id="1-less"><a href="#1-less" class="headerlink" title="1.less"></a>1.less</h4><ul>
+<li>less test.txt，分屏打开内容，空格往后打开，b向上返回。</li>
+</ul>
+<p>####2.head</p>
+<ul>
+<li>head test.txt，默认显示文本开头10行；</li>
+<li>head -3 test.txt，显示文本开头3行；</li>
+</ul>
+<p>####3.tail</p>
+<ul>
+<li>tail test.txt，默认打开文本最后10行；</li>
+<li>tail -f test.txt,流式显示；</li>
+<li>tail -3 test.txt，显示txt最后3行；</li>
+</ul>
+<p>####4. 管道 |<br>head -3 test.txt | tail -1  ，只显示文本的第三行；</p>
+<ul>
+<li>其中 | 符号在linux中称作为管道，是将 | 前边命令输出结果作为后边输入；</li>
+<li>echo “/“ | ls -l  预期结果是显示根目录下的内容列表，但结果是显示了当前目录的内容列表，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# echo &quot;/&quot; | ls -l</span><br><span class="line">total 28</span><br><span class="line">-rw-r--r--. 1 root root    0 Sep  6 06:27 a</span><br><span class="line">-rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">lrwxrwxrwx. 1 root root    1 Sep  6 06:14 c -&gt; a</span><br><span class="line">-rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">-rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">-rw-r--r--. 1 root root 1796 Sep  6 06:27 profile</span><br><span class="line">drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
+<p>####5. xargs</p>
+<ul>
+<li>如果要显示根目录内容，需要加上 xargs，这个参数的作用是将管道前边的输出结果，放到它后边命令的最后执行，也就是ls -l<br>/，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# echo &quot;/&quot; | xargs ls -l</span><br><span class="line">total 90</span><br><span class="line">dr-xr-xr-x.  2 root root  4096 Aug 20 02:06 bin</span><br><span class="line">dr-xr-xr-x.  5 root root  1024 Aug 20 02:08 boot</span><br><span class="line">drwxr-xr-x. 18 root root  3680 Sep  8 20:00 dev</span><br><span class="line">drwxr-xr-x. 61 root root  4096 Sep  8 20:00 etc</span><br><span class="line">drwxr-xr-x.  3 root root  4096 Sep  6 05:46 home</span><br><span class="line">dr-xr-xr-x.  8 root root  4096 Aug 20 02:06 lib</span><br><span class="line">dr-xr-xr-x.  9 root root 12288 Aug 20 02:07 lib64</span><br><span class="line">drwx------.  2 root root 16384 Aug 20 02:02 lost+found</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 media</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 mnt</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 opt</span><br><span class="line">dr-xr-xr-x. 85 root root     0 Sep  8 20:00 proc</span><br><span class="line">dr-xr-x---.  3 root root  4096 Sep  6 06:27 root</span><br><span class="line">dr-xr-xr-x.  2 root root 12288 Aug 20 02:07 sbin</span><br><span class="line">drwxr-xr-x.  7 root root     0 Sep  8 20:00 selinux</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 srv</span><br><span class="line">drwxr-xr-x. 13 root root     0 Sep  8 20:00 sys</span><br><span class="line">drwxrwxrwt.  3 root root  4096 Sep  8 20:00 tmp</span><br><span class="line">drwxr-xr-x. 13 root root  4096 Aug 20 02:04 usr</span><br><span class="line">drwxr-xr-x. 17 root root  4096 Aug 20 02:04 var</span><br></pre></td></tr></table></figure>
+<p>####6. tee</p>
+<ul>
+<li>可以将输入流变成两个支线去输出，一个是在标准输出里打印，另一个是可以输出到文本中，这样既能在控制台显示，又能输出到文本中，例如：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# ls -l / | tee abc.txt</span><br><span class="line">total 90</span><br><span class="line">dr-xr-xr-x.  2 root root  4096 Aug 20 02:06 bin</span><br><span class="line">dr-xr-xr-x.  5 root root  1024 Aug 20 02:08 boot</span><br><span class="line">drwxr-xr-x. 18 root root  3680 Sep  8 20:00 dev</span><br><span class="line">drwxr-xr-x. 61 root root  4096 Sep  8 20:00 etc</span><br><span class="line">drwxr-xr-x.  3 root root  4096 Sep  6 05:46 home</span><br><span class="line">dr-xr-xr-x.  8 root root  4096 Aug 20 02:06 lib</span><br><span class="line">dr-xr-xr-x.  9 root root 12288 Aug 20 02:07 lib64</span><br><span class="line">drwx------.  2 root root 16384 Aug 20 02:02 lost+found</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 media</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 mnt</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 opt</span><br><span class="line">dr-xr-xr-x. 85 root root     0 Sep  8 20:00 proc</span><br><span class="line">dr-xr-x---.  3 root root  4096 Sep  6 06:27 root</span><br><span class="line">dr-xr-xr-x.  2 root root 12288 Aug 20 02:07 sbin</span><br><span class="line">drwxr-xr-x.  7 root root     0 Sep  8 20:00 selinux</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 srv</span><br><span class="line">drwxr-xr-x. 13 root root     0 Sep  8 20:00 sys</span><br><span class="line">drwxrwxrwt.  3 root root  4096 Sep  8 20:11 tmp</span><br><span class="line">drwxr-xr-x. 13 root root  4096 Aug 20 02:04 usr</span><br><span class="line">drwxr-xr-x. 17 root root  4096 Aug 20 02:04 var</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查看一下文本内容：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# cat abc.txt </span><br><span class="line">total 90</span><br><span class="line">dr-xr-xr-x.  2 root root  4096 Aug 20 02:06 bin</span><br><span class="line">dr-xr-xr-x.  5 root root  1024 Aug 20 02:08 boot</span><br><span class="line">drwxr-xr-x. 18 root root  3680 Sep  8 20:00 dev</span><br><span class="line">drwxr-xr-x. 61 root root  4096 Sep  8 20:00 etc</span><br><span class="line">drwxr-xr-x.  3 root root  4096 Sep  6 05:46 home</span><br><span class="line">dr-xr-xr-x.  8 root root  4096 Aug 20 02:06 lib</span><br><span class="line">dr-xr-xr-x.  9 root root 12288 Aug 20 02:07 lib64</span><br><span class="line">drwx------.  2 root root 16384 Aug 20 02:02 lost+found</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 media</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 mnt</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 opt</span><br><span class="line">dr-xr-xr-x. 85 root root     0 Sep  8 20:00 proc</span><br><span class="line">dr-xr-x---.  3 root root  4096 Sep  6 06:27 root</span><br><span class="line">dr-xr-xr-x.  2 root root 12288 Aug 20 02:07 sbin</span><br><span class="line">drwxr-xr-x.  7 root root     0 Sep  8 20:00 selinux</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 srv</span><br><span class="line">drwxr-xr-x. 13 root root     0 Sep  8 20:00 sys</span><br><span class="line">drwxrwxrwt.  3 root root  4096 Sep  8 20:11 tmp</span><br><span class="line">drwxr-xr-x. 13 root root  4096 Aug 20 02:04 usr</span><br><span class="line">drwxr-xr-x. 17 root root  4096 Aug 20 02:04 var</span><br></pre></td></tr></table></figure>
+<p>####7. vi（vim）</p>
+<ul>
+<li>vim是vi的升级版，vim +n profile 打开文件并定位到n行，输入：set nu显示行号；</li>
+<li>vim +： 打开文件并定位到最后一行，或者vim直接打开文件，输入G自动到最后一行；</li>
+<li>vim +/关键字，打开文件并定位到关键字位置；</li>
+<li>编辑模式保存退出，除了按ESC-输入:wq操作之外，还可以直接ESC，按ZZ进行保存退出；</li>
+</ul>
+<p>####8. vi（vim）光标移动</p>
+<ul>
+<li>vim profile打开文件，输入i进入编辑模式，i在当前光标前边输入字母，a在当前光标后边输入字母；</li>
+<li>vim profile打开文件，输入o（小写）在当前光标下方新建一行，并转为输入模式；</li>
+<li>vim profile打开文件，输入O（大写）在当前光标所在行的上方，新建一行，并转为输入模式；</li>
+<li>vim profile打开文件，输入I定位在当前光标所在行的行首，并转为输入模式；</li>
+<li>vim profile打开文件，输入A定位在当前光标所在行的行尾，并转为输入模式；</li>
+<li>编辑模式下，h（左）j（下）k（上）l（右），使用这几个字母等同于上下左右键；</li>
+<li>编辑模式下，w 移至下一个单词的词首，可以单词为单位一直下一个；</li>
+<li>编辑模式下，e 跳至当前或前一个单词的词尾；</li>
+<li>编辑模式下，b 跳至当前或前一个单词的词首；</li>
+<li>行内：编辑模式下，0 绝对行首；^ 行首的第一个非空白字符；$ 绝对行尾；</li>
+<li>行间：编辑模式下，G 文章末尾；3G 第3行；gg 文章开头；</li>
+</ul>
+<p>####9. vi（vim）翻屏</p>
+<ul>
+<li>编辑模式下，ctrl+f 往下翻屏，ctr+b 往上翻屏；</li>
+</ul>
+<p>####10. vi（vim）删除&amp;替换</p>
+<ul>
+<li>x 删除光标位置的字符；</li>
+<li>3x 删除光标开始3个字符；</li>
+<li>r 替换光标位置字符；</li>
+<li>dd 删除光标所在行，3dd即删除光标以下的3行内容；</li>
+<li>dw 删除光标所在的整个单词，3dw即删除光标所在之后的3个单词；</li>
+<li>dG 删除光标所在行以下，到最后一行，G表示最后一行；</li>
+<li>p 粘贴光标所在行的下一行（粘贴dd的内容即为剪切），P（大写）粘贴到光标所在行的上一行；</li>
+<li>还可以使用末行模式删除，例如：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:6,$d</span><br></pre></td></tr></table></figure>
+<p>其中6表示开始行号，$表示最后一行，d表示删除，整个命令表示从第6行开始到最后一行全部删除；<br>再例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:.,$d</span><br></pre></td></tr></table></figure>
+<p>其中 <strong>.</strong> 表示当前光标所在位置；<br>如果想从第6行删除到最后，保留最后两行，可以这样操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:6,$-2d</span><br></pre></td></tr></table></figure>
+<p>同样，可以使用末行模式进行具体行的拷贝，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:.,+5y</span><br></pre></td></tr></table></figure>
+<p>从光标所在行开始，向下拷贝5行，然后可以在编辑模式下使用p命令进行拷贝；</p>
+<p>####11. vi（vim）撤销&amp;重做</p>
+<ul>
+<li>u 撤销；</li>
+<li>ctrl+r 重做撤销的操作；</li>
+<li><strong>.</strong> 重复上一步的操作；</li>
+</ul>
+<p>####12. vi（vim）set设置</p>
+<ul>
+<li>set nu 显示行号；</li>
+<li>set nonu 隐藏行号；</li>
+<li>set readonly 设置当前文本为只读，即使修改了也不能保存；</li>
+</ul>
+<p>####13. vi（vim）查找</p>
+<ul>
+<li>/aaa 查找关键字aaa，n向下查找下一个，N向上查找下一个；</li>
+<li>:?aaa 末行模式查找关键字aaa，和直接/不同的是，它默认是向上查找；</li>
+</ul>
+<p>####14. vi（vim）查找并替换s</p>
+<ul>
+<li>从第1行到最后一行，将aaa替换为bbb，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:1,$s/aaa/bbb/</span><br></pre></td></tr></table></figure>
+<p>注意：以上只是将每一行第一个出现的aaa给替换成了bbb，如果同一行有多个aaa将不被替换。如果整行都要替换，需加g，i为忽略大小写，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:1,$s/aaa/bbb/gi</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果将全文中的某个关键字替换，可以使用%，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:%s/aaa/bbb/gi</span><br></pre></td></tr></table></figure>
+<p>####15. vi（vim）编辑模式中执行命令！</p>
+<ul>
+<li>如果在文本编辑模式下，执行命令，可以使用！+指令，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:!ls -l /</span><br></pre></td></tr></table></figure>
+<p>一般在配置文件中，可能会遇到某个文件名忘记了，那么就可使用执行命令模式，去查看文件名然后再回车，继续文件编辑模式，非常方便。</p>
+<h2 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h2><p>####1. 首先看下grep的用法</p>
+<ul>
+<li>查看包含”after”的行，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# grep &quot;after&quot; profile </span><br><span class="line">            if [ &quot;$2&quot; = &quot;after&quot; ] ; then</span><br><span class="line">    pathmunge /usr/local/sbin after</span><br><span class="line">    pathmunge /usr/sbin after</span><br><span class="line">    pathmunge /sbin after</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查看不包含所定义关键字的行，加上-v：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# grep -v &quot;after&quot; profile</span><br></pre></td></tr></table></figure>
+<p>####2. 匹配操作符</p>
+<ul>
+<li>\ 转义字符；</li>
+<li><strong>.</strong> 匹配任意单个字符；</li>
+<li>[12389],[^12],[a-k] 字符序列单字符占位，匹配[]中任意字符；</li>
+<li>^ 匹配行首；</li>
+<li>$ 匹配行尾；</li>
+<li>\&lt;,> 单词首尾边界；</li>
+<li>| 连接操作符；</li>
+<li>(,) 选择操作符；</li>
+<li>\n 反向引用；</li>
+<li>[^0-9] 匹配任意不在0-9范围内的字符串；</li>
+</ul>
+<p>####3. 重复操作符<br>注意：其中斜体的为扩展正则表达式，使用时需要转义 \?,+,{,|,(</p>
+<ul>
+<li>? 匹配前边子表达式0到1次；</li>
+<li><ul>
+<li>匹配0到多次；</li>
+</ul>
+</li>
+<li><em>+ 匹配1到多次</em>；</li>
+<li><em>{n} 匹配n次</em>；</li>
+<li><em>{n,} 匹配n到多次</em>；</li>
+<li><em>{n,m} 匹配n到m次</em>；</li>
+<li><strong>.*</strong> 匹配任意单个或多个字符；</li>
+<li>搜索含有某个单词的行记录，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep &quot;\&lt;aaa\&gt;&quot; profile</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Helon 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Helon 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/OPS/" rel="tag"># OPS</a>
+          
+            <a href="/tags/Linux/" rel="tag"># Linux</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/05/Linux常用命令（一）/" rel="next" title="Linux常用命令（一）">
+                <i class="fa fa-chevron-left"></i> Linux常用命令（一）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/" rel="prev" title="使用JWT实现单点登录（完全跨域方案）">
+                使用JWT实现单点登录（完全跨域方案） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.png"
+                alt="Helon" />
+            
+              <p class="site-author-name" itemprop="name">Helon</p>
+              <p class="site-description motion-element" itemprop="description">求高志者得中志，求中志者得小志，求小志者将不得志</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#vim文本编辑"><span class="nav-number">1.</span> <span class="nav-text">vim文本编辑</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-less"><span class="nav-number">1.0.1.</span> <span class="nav-text">1.less</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#正则表达式"><span class="nav-number">2.</span> <span class="nav-text">正则表达式</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Helon</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -252,7 +252,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2018/02/05/Redis学习笔记（一）/">
+    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Helon">
@@ -271,7 +271,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/02/05/Redis学习笔记（一）/" itemprop="url">Redis学习笔记（一）</a></h1>
+                <a class="post-title-link" href="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/" itemprop="url">使用JWT实现单点登录（完全跨域方案）</a></h1>
         
 
         <div class="post-meta">
@@ -283,8 +283,720 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-05T21:33:02+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-10T16:52:32+08:00">
+                2018-09-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/架构/" itemprop="url" rel="index">
+                    <span itemprop="name">架构</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="首先介绍一下什么是JSON-Web-Token（JWT）？"><a href="#首先介绍一下什么是JSON-Web-Token（JWT）？" class="headerlink" title="首先介绍一下什么是JSON Web Token（JWT）？"></a>首先介绍一下什么是JSON Web Token（JWT）？</h2><p><em>官方文档是这样解释的</em>：JSON Web Token（JWT）是一个开放标准（RFC 7519），它定义了一种紧凑且独立的方式，可以在各方之间作为JSON对象安全地传输信息。此信息可以通过数字签名进行验证和信任。JWT可以使用秘密（使用HMAC算法）或使用RSA或ECDSA的公钥/私钥对进行签名。<br>虽然JWT可以加密以在各方之间提供保密，但只将专注于签名令牌。签名令牌可以验证其中包含的声明的完整性，而加密令牌则隐藏其他方的声明。当使用公钥/私钥对签署令牌时，签名还证明只有持有私钥的一方是签署私钥的一方。</p>
+<p>通俗来讲，JWT是一个含签名并携带用户相关信息的加密串，页面请求校验登录接口时，请求头中携带JWT串到后端服务，后端通过签名加密串匹配校验，保证信息未被篡改。校验通过则认为是可靠的请求，将正常返回数据。</p>
+<h2 id="什么情况下使用JWT比较适合？"><a href="#什么情况下使用JWT比较适合？" class="headerlink" title="什么情况下使用JWT比较适合？"></a>什么情况下使用JWT比较适合？</h2><ul>
+<li>授权：这是最常见的使用场景，解决单点登录问题。因为JWT使用起来轻便，开销小，服务端不用记录用户状态信息（无状态），所以使用比较广泛；</li>
+<li>信息交换：JWT是在各个服务之间安全传输信息的好方法。因为JWT可以签名，例如，使用公钥/私钥对儿 - 可以确定请求方是合法的。此外，由于使用标头和有效负载计算签名，还可以验证内容是否未被篡改。<h2 id="JWT的结构体是什么样的？"><a href="#JWT的结构体是什么样的？" class="headerlink" title="JWT的结构体是什么样的？"></a>JWT的结构体是什么样的？</h2>JWT由三部分组成，分别是头信息、有效载荷、签名，中间以（.）分隔，如下格式：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xxx.yyy.zzz</span><br></pre></td></tr></table></figure>
+<p><strong>header（头信息）</strong><br>由两部分组成，令牌类型（即：JWT）、散列算法（HMAC、RSASSA、RSASSA-PSS等），例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;alg&quot;: &quot;HS256&quot;,</span><br><span class="line">  &quot;typ&quot;: &quot;JWT&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，这个JSON被编码为Base64Url，形成JWT的第一部分。</p>
+<p><strong>Payload（有效载荷）</strong><br>JWT的第二部分是payload，其中包含claims。claims是关于实体（常用的是用户信息）和其他数据的声明，claims有三种类型： registered, public, and private claims。<br><strong>Registered claims：</strong> 这些是一组预定义的claims，非强制性的，但是推荐使用， iss（发行人）， exp（到期时间）， sub（主题）， aud（观众）等；<br><strong>Public claims:</strong> 自定义claims，注意不要和JWT注册表中属性冲突，<a href="https://www.iana.org/assignments/jwt/jwt.xhtml" target="_blank" rel="noopener">这里可以查看JWT注册表</a><br><strong>Private claims:</strong> 这些是自定义的claims，用于在同意使用这些claims的各方之间共享信息，它们既不是Registered claims，也不是Public claims。<br><strong>以下是payload示例：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;sub&quot;: &quot;1234567890&quot;,</span><br><span class="line">  &quot;name&quot;: &quot;John Doe&quot;,</span><br><span class="line">  &quot;admin&quot;: true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，再经过Base64Url编码，形成JWT的第二部分；</p>
+<p><em>注意：对于签名令牌，此信息虽然可以防止篡改，但任何人都可以读取。除非加密，否则不要将敏感信息放入到Payload或Header元素中。</em></p>
+<p><strong>Signature</strong><br>要创建签名部分，必须采用编码的Header，编码的Payload，秘钥，Header中指定的算法，并对其进行签名。<br>例如，如果要使用HMAC SHA256算法，将按以下方式创建签名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HMACSHA256(</span><br><span class="line">  base64UrlEncode(header) + &quot;.&quot; +</span><br><span class="line">  base64UrlEncode(payload),</span><br><span class="line">  secret)</span><br></pre></td></tr></table></figure>
+<p>签名用于验证消息在此过程中未被篡改，并且，在使用私钥签名令牌的情况下，它还可以验证JWT的请求方是否是它所声明的请求方。<br>输出是三个由点分隔的Base64-URL字符串，可以在HTML和HTTP环境中轻松传递，与SAML等基于XML的标准相比更加紧凑。<br>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.</span><br><span class="line">eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.</span><br><span class="line">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</span><br></pre></td></tr></table></figure>
+<h2 id="JWT工作机制？"><a href="#JWT工作机制？" class="headerlink" title="JWT工作机制？"></a>JWT工作机制？</h2><p>在身份验证中，当用户使用其凭据成功登录时，将返回JSON Web Token（即：JWT）。由于令牌是凭证，因此必须非常小心以防止出现安全问题。一般情况下，不应将令牌保留的时间超过要求。理论上超时时间越短越好。</p>
+<p>每当用户想要访问受保护的路由或资源时，用户代理应该使用Bearer模式发送JWT，通常在Authorization header中。标题内容应如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Authorization: Bearer &lt;token&gt;</span><br></pre></td></tr></table></figure>
+<p>在某些情况下，这可以作为无状态授权机制。服务器的受保护路由将检查Authorization header中的有效JWT ，如果有效，则允许用户访问受保护资源。如果JWT包含必要的数据，则可以减少查询数据库或缓存信息。<br>如果在Authorization header中发送令牌，则跨域资源共享（CORS）将不会成为问题，因为它不使用cookie。</p>
+<p><em>注意：使用签名令牌，虽然他们无法更改，但是令牌中包含的所有信息都会向用户或其他方公开。这意味着不应该在令牌中放置敏感信息。</em></p>
+<h2 id="使用JWT的好处是什么？"><a href="#使用JWT的好处是什么？" class="headerlink" title="使用JWT的好处是什么？"></a>使用JWT的好处是什么？</h2><p>相比<strong>Simple Web Tokens (SWT)（简单Web令牌）</strong> and <strong>Security Assertion Markup Language Tokens (SAML)（安全断言标记语言令牌）</strong>；</p>
+<ul>
+<li>JWT比SAML更简洁，在HTML和HTTP环境中传递更方便；</li>
+<li>在安全方面，SWT只能使用HMAC算法通过共享密钥对称签名。但是，JWT和SAML令牌可以使用X.509证书形式的公钥/私钥对进行签名。与签名JSON的简单性相比，使用XML数字签名可能会存在安全漏洞；</li>
+<li>JSON解析成对象相比XML更流行、方便。</li>
+</ul>
+<h2 id="以下是我实际项目中的应用分析"><a href="#以下是我实际项目中的应用分析" class="headerlink" title="以下是我实际项目中的应用分析"></a>以下是我实际项目中的应用分析</h2><p>首先看一下大致的架构及流程图：<br><img src="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-01.jpg"><br><img src="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-02.jpg"></p>
+<p><strong>主要有以下三步：</strong></p>
+<ul>
+<li>项目一开始我先封装了一个JWTHelper工具包，主要提供了生成JWT、解析JWT以及校验JWT的方法，其他还有一些加密相关操作，稍后我会以代码的形式介绍下代码。工具包写好后我将打包上传到私服，能够随时依赖下载使用；</li>
+<li>接下来，我在客户端项目中依赖JWTHelper工具包，并添加Interceptor拦截器，拦截需要校验登录的接口。拦截器中校验JWT有效性，并在response中重新设置JWT的新值；</li>
+<li>最后在JWT服务端，依赖JWT工具包，在登录方法中，需要在登录校验成功后调用生成JWT方法，生成一个JWT令牌并且设置到response的header中。</li>
+</ul>
+<p><strong>以下是部分代码分享：</strong></p>
+<ul>
+<li><strong>JwtHelper工具类：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: JWT工具类</span><br><span class="line"> * 参考官网：https://jwt.io/</span><br><span class="line"> * JWT的数据结构为：A.B.C三部分数据，由字符点&quot;.&quot;分割成三部分数据</span><br><span class="line"> * A-header头信息</span><br><span class="line"> * B-payload 有效负荷 一般包括：已注册信息（registered claims），公开数据(public claims)，私有数据(private claims)</span><br><span class="line"> * C-signature 签名信息 是将header和payload进行加密生成的</span><br><span class="line"> * @Data: Created in 2018/7/19 14:11</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">public class JwtHelper &#123;</span><br><span class="line"></span><br><span class="line">    private static Logger logger = LoggerFactory.getLogger(JwtHelper.class);</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 生成JWT字符串</span><br><span class="line">     * 格式：A.B.C</span><br><span class="line">     * A-header头信息</span><br><span class="line">     * B-payload 有效负荷</span><br><span class="line">     * C-signature 签名信息 是将header和payload进行加密生成的</span><br><span class="line">     * @param userId - 用户编号</span><br><span class="line">     * @param userName - 用户名</span><br><span class="line">     * @param identities - 客户端信息（变长参数），目前包含浏览器信息，用于客户端拦截器校验，防止跨域非法访问</span><br><span class="line">     * @Data: 2018/7/28 19:26</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String generateJWT(String userId, String userName, String ...identities) &#123;</span><br><span class="line">        //签名算法，选择SHA-256</span><br><span class="line">        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;</span><br><span class="line">        //获取当前系统时间</span><br><span class="line">        long nowTimeMillis = System.currentTimeMillis();</span><br><span class="line">        Date now = new Date(nowTimeMillis);</span><br><span class="line">        //将BASE64SECRET常量字符串使用base64解码成字节数组</span><br><span class="line">        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(SecretConstant.BASE64SECRET);</span><br><span class="line">        //使用HmacSHA256签名算法生成一个HS256的签名秘钥Key</span><br><span class="line">        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());</span><br><span class="line">        //添加构成JWT的参数</span><br><span class="line">        Map&lt;String, Object&gt; headMap = new HashMap&lt;&gt;();</span><br><span class="line">        /*</span><br><span class="line">            Header</span><br><span class="line">            &#123;</span><br><span class="line">              &quot;alg&quot;: &quot;HS256&quot;,</span><br><span class="line">              &quot;typ&quot;: &quot;JWT&quot;</span><br><span class="line">            &#125;</span><br><span class="line">         */</span><br><span class="line">        headMap.put(&quot;alg&quot;, SignatureAlgorithm.HS256.getValue());</span><br><span class="line">        headMap.put(&quot;typ&quot;, &quot;JWT&quot;);</span><br><span class="line">        JwtBuilder builder = Jwts.builder().setHeader(headMap)</span><br><span class="line">                /*</span><br><span class="line">                    Payload</span><br><span class="line">                    &#123;</span><br><span class="line">                      &quot;userId&quot;: &quot;1234567890&quot;,</span><br><span class="line">                      &quot;userName&quot;: &quot;John Doe&quot;,</span><br><span class="line">                    &#125;</span><br><span class="line">                 */</span><br><span class="line">                //加密后的客户编号</span><br><span class="line">                .claim(&quot;userId&quot;, AESSecretUtil.encryptToStr(userId, SecretConstant.DATAKEY))</span><br><span class="line">                //客户名称</span><br><span class="line">                .claim(&quot;userName&quot;, userName)</span><br><span class="line">                //客户端浏览器信息</span><br><span class="line">                .claim(&quot;userAgent&quot;, identities[0])</span><br><span class="line">                //Signature</span><br><span class="line">                .signWith(signatureAlgorithm, signingKey);</span><br><span class="line">        //添加Token过期时间</span><br><span class="line">        if (SecretConstant.EXPIRESSECOND &gt;= 0) &#123;</span><br><span class="line">            long expMillis = nowTimeMillis + SecretConstant.EXPIRESSECOND;</span><br><span class="line">            Date expDate = new Date(expMillis);</span><br><span class="line">            builder.setExpiration(expDate).setNotBefore(now);</span><br><span class="line">        &#125;</span><br><span class="line">        return builder.compact();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 解析JWT</span><br><span class="line">     * 返回Claims对象</span><br><span class="line">     * @param jsonWebToken - JWT</span><br><span class="line">     * @Data: 2018/7/28 19:25</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static Claims parseJWT(String jsonWebToken) &#123;</span><br><span class="line">        Claims claims = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (StringUtils.isNotBlank(jsonWebToken)) &#123;</span><br><span class="line">                //解析jwt</span><br><span class="line">                claims = Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary(SecretConstant.BASE64SECRET))</span><br><span class="line">                        .parseClaimsJws(jsonWebToken).getBody();</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                logger.warn(&quot;[JWTHelper]-json web token 为空&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            logger.error(&quot;[JWTHelper]-JWT解析异常：可能因为token已经超时或非法token&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return claims;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 校验JWT是否有效</span><br><span class="line">     * 返回json字符串的demo:</span><br><span class="line">     * &#123;&quot;freshToken&quot;:&quot;A.B.C&quot;,&quot;userName&quot;:&quot;Judy&quot;,&quot;userId&quot;:&quot;123&quot;, &quot;userAgent&quot;:&quot;xxxx&quot;&#125;</span><br><span class="line">     * freshToken-刷新后的jwt</span><br><span class="line">     * userName-客户名称</span><br><span class="line">     * userId-客户编号</span><br><span class="line">     * userAgent-客户端浏览器信息</span><br><span class="line">     * @param jsonWebToken - JWT</span><br><span class="line">     * @Data: 2018/7/24 15:28</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String validateLogin(String jsonWebToken) &#123;</span><br><span class="line">        Map&lt;String, Object&gt; retMap = null;</span><br><span class="line">        Claims claims = parseJWT(jsonWebToken);</span><br><span class="line">        if (claims != null) &#123;</span><br><span class="line">            //解密客户编号</span><br><span class="line">            String decryptUserId = AESSecretUtil.decryptToStr((String)claims.get(&quot;userId&quot;), SecretConstant.DATAKEY);</span><br><span class="line">            retMap = new HashMap&lt;&gt;();</span><br><span class="line">            //加密后的客户编号</span><br><span class="line">            retMap.put(&quot;userId&quot;, decryptUserId);</span><br><span class="line">            //客户名称</span><br><span class="line">            retMap.put(&quot;userName&quot;, claims.get(&quot;userName&quot;));</span><br><span class="line">            //客户端浏览器信息</span><br><span class="line">            retMap.put(&quot;userAgent&quot;, claims.get(&quot;userAgent&quot;));</span><br><span class="line">            //刷新JWT</span><br><span class="line">            retMap.put(&quot;freshToken&quot;, generateJWT(decryptUserId, (String)claims.get(&quot;userName&quot;), (String)claims.get(&quot;userAgent&quot;), (String)claims.get(&quot;domainName&quot;)));</span><br><span class="line">        &#125;else &#123;</span><br><span class="line">            logger.warn(&quot;[JWTHelper]-JWT解析出claims为空&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return retMap!=null?JSONObject.toJSONString(retMap):null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">       String jsonWebKey = generateJWT(&quot;123&quot;, &quot;Judy&quot;,</span><br><span class="line">               &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36&quot;);</span><br><span class="line">       System.out.println(jsonWebKey);</span><br><span class="line">       Claims claims =  parseJWT(jsonWebKey);</span><br><span class="line">        System.out.println(claims);</span><br><span class="line">       System.out.println(validateLogin(jsonWebKey));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>AES加密工具类：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: AES加密工具类</span><br><span class="line"> * @Data: Created in 2018/7/28 18:38</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">public class AESSecretUtil &#123;</span><br><span class="line"></span><br><span class="line">    /**秘钥的大小*/</span><br><span class="line">    private static final int KEYSIZE = 128;</span><br><span class="line">    </span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES加密</span><br><span class="line">     * @param data - 待加密内容</span><br><span class="line">     * @param key - 加密秘钥</span><br><span class="line">     * @Data: 2018/7/28 18:42</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static byte[] encrypt(String data, String key) &#123;</span><br><span class="line">        if(StringUtils.isNotBlank(data))&#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                KeyGenerator keyGenerator = KeyGenerator.getInstance(&quot;AES&quot;);</span><br><span class="line">                //选择一种固定算法，为了避免不同java实现的不同算法，生成不同的密钥，而导致解密失败</span><br><span class="line">                SecureRandom random = SecureRandom.getInstance(&quot;SHA1PRNG&quot;);</span><br><span class="line">                random.setSeed(key.getBytes());</span><br><span class="line">                keyGenerator.init(KEYSIZE, random);</span><br><span class="line">                SecretKey secretKey = keyGenerator.generateKey();</span><br><span class="line">                byte[] enCodeFormat = secretKey.getEncoded();</span><br><span class="line">                SecretKeySpec secretKeySpec = new SecretKeySpec(enCodeFormat, &quot;AES&quot;);</span><br><span class="line">                Cipher cipher = Cipher.getInstance(&quot;AES&quot;);// 创建密码器</span><br><span class="line">                byte[] byteContent = data.getBytes(&quot;utf-8&quot;);</span><br><span class="line">                cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);// 初始化</span><br><span class="line">                byte[] result = cipher.doFinal(byteContent);</span><br><span class="line">                return result; // 加密</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES加密，返回String</span><br><span class="line">     * @param data - 待加密内容</span><br><span class="line">     * @param key - 加密秘钥</span><br><span class="line">     * @Data: 2018/7/28 18:59</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String encryptToStr(String data, String key)&#123;</span><br><span class="line"></span><br><span class="line">        return StringUtils.isNotBlank(data)?parseByte2HexStr(encrypt(data, key)):null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES解密</span><br><span class="line">     * @param data - 待解密字节数组</span><br><span class="line">     * @param key - 秘钥</span><br><span class="line">     * @Data: 2018/7/28 19:01</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static byte[] decrypt(byte[] data, String key) &#123;</span><br><span class="line">        if (ArrayUtils.isNotEmpty(data)) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                KeyGenerator keyGenerator = KeyGenerator.getInstance(&quot;AES&quot;);</span><br><span class="line">                //选择一种固定算法，为了避免不同java实现的不同算法，生成不同的密钥，而导致解密失败</span><br><span class="line">                SecureRandom random = SecureRandom.getInstance(&quot;SHA1PRNG&quot;);</span><br><span class="line">                random.setSeed(key.getBytes());</span><br><span class="line">                keyGenerator.init(KEYSIZE, random);</span><br><span class="line">                SecretKey secretKey = keyGenerator.generateKey();</span><br><span class="line">                byte[] enCodeFormat = secretKey.getEncoded();</span><br><span class="line">                SecretKeySpec secretKeySpec = new SecretKeySpec(enCodeFormat, &quot;AES&quot;);</span><br><span class="line">                Cipher cipher = Cipher.getInstance(&quot;AES&quot;);// 创建密码器</span><br><span class="line">                cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);// 初始化</span><br><span class="line">                byte[] result = cipher.doFinal(data);</span><br><span class="line">                return result; // 加密</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: AES解密，返回String</span><br><span class="line">     * @param enCryptdata - 待解密字节数组</span><br><span class="line">     * @param key - 秘钥</span><br><span class="line">     * @Data: 2018/7/28 19:01</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String decryptToStr(String enCryptdata, String key) &#123;</span><br><span class="line">        return StringUtils.isNotBlank(enCryptdata)?new String(decrypt(parseHexStr2Byte(enCryptdata), key)):null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 将二进制转换成16进制</span><br><span class="line">     * @param buf - 二进制数组</span><br><span class="line">     * @Data: 2018/7/28 19:12</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static String parseByte2HexStr(byte buf[]) &#123;</span><br><span class="line">        StringBuffer sb = new StringBuffer();</span><br><span class="line">        for (int i = 0; i &lt; buf.length; i++) &#123;</span><br><span class="line">            String hex = Integer.toHexString(buf[i] &amp; 0xFF);</span><br><span class="line">            if (hex.length() == 1) &#123;</span><br><span class="line">                hex = &apos;0&apos; + hex;</span><br><span class="line">            &#125;</span><br><span class="line">            sb.append(hex.toUpperCase());</span><br><span class="line">        &#125;</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @Author: Helon</span><br><span class="line">     * @Description: 将16进制转换为二进制</span><br><span class="line">     * @param hexStr - 16进制字符串</span><br><span class="line">     * @Data: 2018/7/28 19:13</span><br><span class="line">     * @Modified By:</span><br><span class="line">     */</span><br><span class="line">    public static byte[] parseHexStr2Byte(String hexStr) &#123;</span><br><span class="line">        if (hexStr.length() &lt; 1)</span><br><span class="line">            return null;</span><br><span class="line">        byte[] result = new byte[hexStr.length()/2];</span><br><span class="line">        for (int i = 0;i&lt; hexStr.length()/2; i++) &#123;</span><br><span class="line">            int high = Integer.parseInt(hexStr.substring(i*2, i*2+1), 16);</span><br><span class="line">            int low = Integer.parseInt(hexStr.substring(i*2+1, i*2+2), 16);</span><br><span class="line">            result[i] = (byte) (high * 16 + low);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        String ss = encryptToStr(&quot;eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxMjMiLCJ1c2VyTmFtZSI6Ikp1ZHkiLCJleHAiOjE1MzI3Nzk2MjIsIm5iZiI6MTUzMjc3NzgyMn0.sIw_leDZwG0pJ8ty85Iecd_VXjObYutILNEwPUyeVSo&quot;, SecretConstant.DATAKEY);</span><br><span class="line">        System.out.println(ss);</span><br><span class="line">        System.out.println(decryptToStr(ss, SecretConstant.DATAKEY));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>所使用的常量类：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: JWT使用常量值</span><br><span class="line"> * @Data: Created in 2018/7/27 14:37</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">public class SecretConstant &#123;</span><br><span class="line"></span><br><span class="line">    //签名秘钥 自定义</span><br><span class="line">    public static final String BASE64SECRET = &quot;***********&quot;;</span><br><span class="line"></span><br><span class="line">    //超时毫秒数（默认30分钟）</span><br><span class="line">    public static final int EXPIRESSECOND = 1800000;</span><br><span class="line"></span><br><span class="line">    //用于JWT加密的密匙 自定义</span><br><span class="line">    public static final String DATAKEY = &quot;************&quot;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>客户端pom依赖：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!--jwt工具类--&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.chtwm.component&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;jwt-helper&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;xxx&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>客户端拦截器：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @Author: Helon</span><br><span class="line"> * @Description: 校验是否登录拦截器</span><br><span class="line"> * @Data: Created in 2018/7/30 14:30</span><br><span class="line"> * @Modified By:</span><br><span class="line"> */</span><br><span class="line">@Slf4j</span><br><span class="line">public class ValidateLoginInterceptor implements HandlerInterceptor &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception &#123;</span><br><span class="line">        //首先从请求头中获取jwt串，与页面约定好存放jwt值的请求头属性名为User-Token</span><br><span class="line">        String jwt = httpServletRequest.getHeader(&quot;User-Token&quot;);</span><br><span class="line">        log.info(&quot;[登录校验拦截器]-从header中获取的jwt为:&#123;&#125;&quot;, jwt);</span><br><span class="line">        //判断jwt是否有效</span><br><span class="line">        if(StringUtils.isNotBlank(jwt))&#123;</span><br><span class="line">            //校验jwt是否有效,有效则返回json信息，无效则返回空</span><br><span class="line">            String retJson = JwtHelper.validateLogin(jwt);</span><br><span class="line">            log.info(&quot;[登录校验拦截器]-校验JWT有效性返回结果:&#123;&#125;&quot;, retJson);</span><br><span class="line">            //retJSON为空则说明jwt超时或非法</span><br><span class="line">            if(StringUtils.isNotBlank(retJson))&#123;</span><br><span class="line">                JSONObject jsonObject = JSONObject.parseObject(retJson);</span><br><span class="line">                //校验客户端信息</span><br><span class="line">                String userAgent = httpServletRequest.getHeader(&quot;User-Agent&quot;);</span><br><span class="line">                if (userAgent.equals(jsonObject.getString(&quot;userAgent&quot;))) &#123;</span><br><span class="line">                    //获取刷新后的jwt值，设置到响应头中</span><br><span class="line">                    httpServletResponse.setHeader(&quot;User-Token&quot;, jsonObject.getString(&quot;freshToken&quot;));</span><br><span class="line">                    //将客户编号设置到session中</span><br><span class="line">                    httpServletRequest.getSession().setAttribute(GlobalConstant.SESSION_CUSTOMER_NO_KEY, jsonObject.getString(&quot;userId&quot;));</span><br><span class="line">                    return true;</span><br><span class="line">                &#125;else&#123;</span><br><span class="line">                    log.warn(&quot;[登录校验拦截器]-客户端浏览器信息与JWT中存的浏览器信息不一致，重新登录。当前浏览器信息:&#123;&#125;&quot;, userAgent);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                log.warn(&quot;[登录校验拦截器]-JWT非法或已超时，重新登录&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        //输出响应流</span><br><span class="line">        JSONObject jsonObject = new JSONObject();</span><br><span class="line">        jsonObject.put(&quot;hmac&quot;, &quot;&quot;);</span><br><span class="line">        jsonObject.put(&quot;status&quot;, &quot;&quot;);</span><br><span class="line">        jsonObject.put(&quot;code&quot;, &quot;4007&quot;);</span><br><span class="line">        jsonObject.put(&quot;msg&quot;, &quot;未登录&quot;);</span><br><span class="line">        jsonObject.put(&quot;data&quot;, &quot;&quot;);</span><br><span class="line">        httpServletResponse.setCharacterEncoding(&quot;UTF-8&quot;);</span><br><span class="line">        httpServletResponse.setContentType(&quot;application/json; charset=utf-8&quot;);</span><br><span class="line">        httpServletResponse.getOutputStream().write(jsonObject.toJSONString().getBytes(&quot;UTF-8&quot;));</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>客户端拦截器在XML文件中配置：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;!--拦截器配置--&gt;</span><br><span class="line">   &lt;mvc:interceptors&gt;</span><br><span class="line">       &lt;mvc:interceptor&gt;</span><br><span class="line">        &lt;!--需拦截url配置--&gt;</span><br><span class="line">           &lt;mvc:exclude-mapping path=&quot;/api/aa/bb/**&quot; /&gt;</span><br><span class="line">           &lt;mvc:exclude-mapping path=&quot;/api/aa/cc/test&quot; /&gt;</span><br><span class="line">           &lt;bean id=&quot;validateLoginInterceptor&quot; class=&quot;com.xxx.ValidateLoginInterceptor&quot; /&gt;</span><br><span class="line">       &lt;/mvc:interceptor&gt;</span><br><span class="line">   &lt;/mvc:interceptors&gt;</span><br></pre></td></tr></table></figure>
+<p>到此，后台服务的配置已经完成，下一步就需要前端页面将JWT令牌从response响应头中取出，然后存入localstorage或cookie中。但是遇到跨域场景，处理起来就会比较复杂，因为一旦在浏览器中跨域将获取不到localstorage中的JWT令牌。例如<a href="http://www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage（[参考博文](https://www.cnblogs.com/tyrion1990/p/8134384.html)），具体我使用代码分享的方式来分析。" target="_blank" rel="noopener">www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage（[参考博文](https://www.cnblogs.com/tyrion1990/p/8134384.html)），具体我使用代码分享的方式来分析。</a></p>
+<ul>
+<li><strong>前端页面js代码（服务端）：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">/**CURD本地存储信息 start**/</span><br><span class="line">      (function(doc,win)&#123;</span><br><span class="line">          var fn=function()&#123;&#125;;</span><br><span class="line">          fn.prototype=&#123;</span><br><span class="line">              /*本地数据存储 t:cookie有效时间，单位s; domain:cookie存储所属的domain域*/</span><br><span class="line">              setLocalCookie: function (k, v, t,domain) &#123;</span><br><span class="line">                  //如果当前浏览器不支持localStorage将存储在cookie中</span><br><span class="line">                  typeof window.localStorage !== &quot;undefined&quot; ? localStorage.setItem(k, v) :</span><br><span class="line">                      (function () &#123;</span><br><span class="line">                          t = t || 365 * 12 * 60 * 60;</span><br><span class="line">                          domain=domain?domain:&quot;.jwtserver.com&quot;;</span><br><span class="line">                          document.cookie = k + &quot;=&quot; + v + &quot;;max-age=&quot; + t+&quot;;domain=&quot;+domain+&quot;;path=/&quot;;</span><br><span class="line">                      &#125;)()</span><br><span class="line">              &#125;,</span><br><span class="line">              /*获取本地存储数据*/</span><br><span class="line">              getLocalCookie: function (k) &#123;</span><br><span class="line">                  k = k || &quot;localDataTemp&quot;;</span><br><span class="line">                  return typeof window.localStorage !== &quot;undefined&quot; ? localStorage.getItem(k) :</span><br><span class="line">                      (function () &#123;</span><br><span class="line">                          var all = document.cookie.split(&quot;;&quot;);</span><br><span class="line">                          var cookieData = &#123;&#125;;</span><br><span class="line">                          for (var i = 0, l = all.length; i &lt; l; i++) &#123;</span><br><span class="line">                              var p = all[i].indexOf(&quot;=&quot;);</span><br><span class="line">                              var dataName = all[i].substring(0, p).replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,&quot;&quot;);</span><br><span class="line">                              cookieData[dataName] = all[i].substring(p + 1);</span><br><span class="line">                          &#125;</span><br><span class="line">                          return cookieData[k]</span><br><span class="line">                      &#125;)();</span><br><span class="line">              &#125;,</span><br><span class="line">              /*删除本地存储数据*/</span><br><span class="line">              clearLocalData: function (k) &#123;</span><br><span class="line">                  k = k || &quot;localDataTemp&quot;;</span><br><span class="line">                  typeof window.localStorage !== &quot;undefined&quot; ? localStorage.removeItem(k) :</span><br><span class="line">                      (function () &#123;</span><br><span class="line">                          document.cookie = k + &quot;=temp&quot; + &quot;;max-age=0&quot;;</span><br><span class="line">                      &#125;)()</span><br><span class="line">              &#125;,</span><br><span class="line">              init:function()&#123;</span><br><span class="line">                  this.bindEvent();</span><br><span class="line">              &#125;,</span><br><span class="line">              //事件绑定</span><br><span class="line">              bindEvent:function()&#123;</span><br><span class="line">                  var _this=this;</span><br><span class="line">                  win.addEventListener(&quot;message&quot;,function(evt)&#123;</span><br><span class="line">                      if(win.parent!=evt.source)&#123;return&#125;</span><br><span class="line">                      var options=JSON.parse(evt.data);</span><br><span class="line">                      if(options.type==&quot;GET&quot;)&#123;</span><br><span class="line">                          var data=tools.getLocalCookie(options.key);</span><br><span class="line">                          win.parent.postMessage(data, &quot;*&quot;);</span><br><span class="line">                      &#125;</span><br><span class="line">                      options.type==&quot;SET&quot;&amp;&amp;_this.setLocalCookie(options.key,options.value);</span><br><span class="line">                      options.type==&quot;REM&quot;&amp;&amp;_this.clearLocalData(options.key);</span><br><span class="line">                  &#125;,false)</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;;</span><br><span class="line">          var tools=new fn();</span><br><span class="line">          tools.init();</span><br><span class="line">      &#125;)(document,window);</span><br><span class="line">      /**CURD本地存储信息 end**/</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>前端页面js代码（客户端）：</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//页面初始化向iframe域名发送消息</span><br><span class="line">window.onload = function() &#123;</span><br><span class="line">    console.log(&apos;get key value......................&apos;)</span><br><span class="line">    window.frames[0].postMessage(JSON.stringify(&#123;type:&quot;GET&quot;,key:&quot;User-Token&quot;&#125;),&apos;*&apos;);</span><br><span class="line">&#125;</span><br><span class="line">//监听message信息，接收从iframe域下获取到的token信息，然后存储到localstorage或cookie中</span><br><span class="line">window.addEventListener(&apos;message&apos;, function(e) &#123;</span><br><span class="line">    console.log(&apos;listen.....&apos;);</span><br><span class="line">    var data = e.data;</span><br><span class="line">    console.log(data);</span><br><span class="line">    if(data != null)&#123;</span><br><span class="line">        localStorage.setItem(&quot;User-Token&quot;, data);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, false);</span><br></pre></td></tr></table></figure>
+<p><strong>总结：</strong><br>优点：在非跨域环境下使用JWT机制是一个非常不错的选择，实现方式简单，操作方便，能够快速实现。由于服务端不存储用户状态信息，因此大用户量，对后台服务也不会造成压力；<br>缺点：跨域实现相对比较麻烦，安全性也有待探讨。因为JWT令牌返回到页面中，可以使用js获取到，如果遇到XSS攻击令牌可能会被盗取，在JWT还没超时的情况下，就会被获取到敏感数据信息。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2018/02/06/Linux常用命令（二）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helon">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helon">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/02/06/Linux常用命令（二）/" itemprop="url">Linux常用命令（二）</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-06T10:25:32+08:00">
+                2018-02-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="vim文本编辑"><a href="#vim文本编辑" class="headerlink" title="vim文本编辑"></a>vim文本编辑</h2><h4 id="1-less"><a href="#1-less" class="headerlink" title="1.less"></a>1.less</h4><ul>
+<li>less test.txt，分屏打开内容，空格往后打开，b向上返回。</li>
+</ul>
+<p>####2.head</p>
+<ul>
+<li>head test.txt，默认显示文本开头10行；</li>
+<li>head -3 test.txt，显示文本开头3行；</li>
+</ul>
+<p>####3.tail</p>
+<ul>
+<li>tail test.txt，默认打开文本最后10行；</li>
+<li>tail -f test.txt,流式显示；</li>
+<li>tail -3 test.txt，显示txt最后3行；</li>
+</ul>
+<p>####4. 管道 |<br>head -3 test.txt | tail -1  ，只显示文本的第三行；</p>
+<ul>
+<li>其中 | 符号在linux中称作为管道，是将 | 前边命令输出结果作为后边输入；</li>
+<li>echo “/“ | ls -l  预期结果是显示根目录下的内容列表，但结果是显示了当前目录的内容列表，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# echo &quot;/&quot; | ls -l</span><br><span class="line">total 28</span><br><span class="line">-rw-r--r--. 1 root root    0 Sep  6 06:27 a</span><br><span class="line">-rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">lrwxrwxrwx. 1 root root    1 Sep  6 06:14 c -&gt; a</span><br><span class="line">-rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">-rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">-rw-r--r--. 1 root root 1796 Sep  6 06:27 profile</span><br><span class="line">drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
+<p>####5. xargs</p>
+<ul>
+<li>如果要显示根目录内容，需要加上 xargs，这个参数的作用是将管道前边的输出结果，放到它后边命令的最后执行，也就是ls -l<br>/，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# echo &quot;/&quot; | xargs ls -l</span><br><span class="line">total 90</span><br><span class="line">dr-xr-xr-x.  2 root root  4096 Aug 20 02:06 bin</span><br><span class="line">dr-xr-xr-x.  5 root root  1024 Aug 20 02:08 boot</span><br><span class="line">drwxr-xr-x. 18 root root  3680 Sep  8 20:00 dev</span><br><span class="line">drwxr-xr-x. 61 root root  4096 Sep  8 20:00 etc</span><br><span class="line">drwxr-xr-x.  3 root root  4096 Sep  6 05:46 home</span><br><span class="line">dr-xr-xr-x.  8 root root  4096 Aug 20 02:06 lib</span><br><span class="line">dr-xr-xr-x.  9 root root 12288 Aug 20 02:07 lib64</span><br><span class="line">drwx------.  2 root root 16384 Aug 20 02:02 lost+found</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 media</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 mnt</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 opt</span><br><span class="line">dr-xr-xr-x. 85 root root     0 Sep  8 20:00 proc</span><br><span class="line">dr-xr-x---.  3 root root  4096 Sep  6 06:27 root</span><br><span class="line">dr-xr-xr-x.  2 root root 12288 Aug 20 02:07 sbin</span><br><span class="line">drwxr-xr-x.  7 root root     0 Sep  8 20:00 selinux</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 srv</span><br><span class="line">drwxr-xr-x. 13 root root     0 Sep  8 20:00 sys</span><br><span class="line">drwxrwxrwt.  3 root root  4096 Sep  8 20:00 tmp</span><br><span class="line">drwxr-xr-x. 13 root root  4096 Aug 20 02:04 usr</span><br><span class="line">drwxr-xr-x. 17 root root  4096 Aug 20 02:04 var</span><br></pre></td></tr></table></figure>
+<p>####6. tee</p>
+<ul>
+<li>可以将输入流变成两个支线去输出，一个是在标准输出里打印，另一个是可以输出到文本中，这样既能在控制台显示，又能输出到文本中，例如：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# ls -l / | tee abc.txt</span><br><span class="line">total 90</span><br><span class="line">dr-xr-xr-x.  2 root root  4096 Aug 20 02:06 bin</span><br><span class="line">dr-xr-xr-x.  5 root root  1024 Aug 20 02:08 boot</span><br><span class="line">drwxr-xr-x. 18 root root  3680 Sep  8 20:00 dev</span><br><span class="line">drwxr-xr-x. 61 root root  4096 Sep  8 20:00 etc</span><br><span class="line">drwxr-xr-x.  3 root root  4096 Sep  6 05:46 home</span><br><span class="line">dr-xr-xr-x.  8 root root  4096 Aug 20 02:06 lib</span><br><span class="line">dr-xr-xr-x.  9 root root 12288 Aug 20 02:07 lib64</span><br><span class="line">drwx------.  2 root root 16384 Aug 20 02:02 lost+found</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 media</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 mnt</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 opt</span><br><span class="line">dr-xr-xr-x. 85 root root     0 Sep  8 20:00 proc</span><br><span class="line">dr-xr-x---.  3 root root  4096 Sep  6 06:27 root</span><br><span class="line">dr-xr-xr-x.  2 root root 12288 Aug 20 02:07 sbin</span><br><span class="line">drwxr-xr-x.  7 root root     0 Sep  8 20:00 selinux</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 srv</span><br><span class="line">drwxr-xr-x. 13 root root     0 Sep  8 20:00 sys</span><br><span class="line">drwxrwxrwt.  3 root root  4096 Sep  8 20:11 tmp</span><br><span class="line">drwxr-xr-x. 13 root root  4096 Aug 20 02:04 usr</span><br><span class="line">drwxr-xr-x. 17 root root  4096 Aug 20 02:04 var</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查看一下文本内容：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# cat abc.txt </span><br><span class="line">total 90</span><br><span class="line">dr-xr-xr-x.  2 root root  4096 Aug 20 02:06 bin</span><br><span class="line">dr-xr-xr-x.  5 root root  1024 Aug 20 02:08 boot</span><br><span class="line">drwxr-xr-x. 18 root root  3680 Sep  8 20:00 dev</span><br><span class="line">drwxr-xr-x. 61 root root  4096 Sep  8 20:00 etc</span><br><span class="line">drwxr-xr-x.  3 root root  4096 Sep  6 05:46 home</span><br><span class="line">dr-xr-xr-x.  8 root root  4096 Aug 20 02:06 lib</span><br><span class="line">dr-xr-xr-x.  9 root root 12288 Aug 20 02:07 lib64</span><br><span class="line">drwx------.  2 root root 16384 Aug 20 02:02 lost+found</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 media</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 mnt</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 opt</span><br><span class="line">dr-xr-xr-x. 85 root root     0 Sep  8 20:00 proc</span><br><span class="line">dr-xr-x---.  3 root root  4096 Sep  6 06:27 root</span><br><span class="line">dr-xr-xr-x.  2 root root 12288 Aug 20 02:07 sbin</span><br><span class="line">drwxr-xr-x.  7 root root     0 Sep  8 20:00 selinux</span><br><span class="line">drwxr-xr-x.  2 root root  4096 Sep 23  2011 srv</span><br><span class="line">drwxr-xr-x. 13 root root     0 Sep  8 20:00 sys</span><br><span class="line">drwxrwxrwt.  3 root root  4096 Sep  8 20:11 tmp</span><br><span class="line">drwxr-xr-x. 13 root root  4096 Aug 20 02:04 usr</span><br><span class="line">drwxr-xr-x. 17 root root  4096 Aug 20 02:04 var</span><br></pre></td></tr></table></figure>
+<p>####7. vi（vim）</p>
+<ul>
+<li>vim是vi的升级版，vim +n profile 打开文件并定位到n行，输入：set nu显示行号；</li>
+<li>vim +： 打开文件并定位到最后一行，或者vim直接打开文件，输入G自动到最后一行；</li>
+<li>vim +/关键字，打开文件并定位到关键字位置；</li>
+<li>编辑模式保存退出，除了按ESC-输入:wq操作之外，还可以直接ESC，按ZZ进行保存退出；</li>
+</ul>
+<p>####8. vi（vim）光标移动</p>
+<ul>
+<li>vim profile打开文件，输入i进入编辑模式，i在当前光标前边输入字母，a在当前光标后边输入字母；</li>
+<li>vim profile打开文件，输入o（小写）在当前光标下方新建一行，并转为输入模式；</li>
+<li>vim profile打开文件，输入O（大写）在当前光标所在行的上方，新建一行，并转为输入模式；</li>
+<li>vim profile打开文件，输入I定位在当前光标所在行的行首，并转为输入模式；</li>
+<li>vim profile打开文件，输入A定位在当前光标所在行的行尾，并转为输入模式；</li>
+<li>编辑模式下，h（左）j（下）k（上）l（右），使用这几个字母等同于上下左右键；</li>
+<li>编辑模式下，w 移至下一个单词的词首，可以单词为单位一直下一个；</li>
+<li>编辑模式下，e 跳至当前或前一个单词的词尾；</li>
+<li>编辑模式下，b 跳至当前或前一个单词的词首；</li>
+<li>行内：编辑模式下，0 绝对行首；^ 行首的第一个非空白字符；$ 绝对行尾；</li>
+<li>行间：编辑模式下，G 文章末尾；3G 第3行；gg 文章开头；</li>
+</ul>
+<p>####9. vi（vim）翻屏</p>
+<ul>
+<li>编辑模式下，ctrl+f 往下翻屏，ctr+b 往上翻屏；</li>
+</ul>
+<p>####10. vi（vim）删除&amp;替换</p>
+<ul>
+<li>x 删除光标位置的字符；</li>
+<li>3x 删除光标开始3个字符；</li>
+<li>r 替换光标位置字符；</li>
+<li>dd 删除光标所在行，3dd即删除光标以下的3行内容；</li>
+<li>dw 删除光标所在的整个单词，3dw即删除光标所在之后的3个单词；</li>
+<li>dG 删除光标所在行以下，到最后一行，G表示最后一行；</li>
+<li>p 粘贴光标所在行的下一行（粘贴dd的内容即为剪切），P（大写）粘贴到光标所在行的上一行；</li>
+<li>还可以使用末行模式删除，例如：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:6,$d</span><br></pre></td></tr></table></figure>
+<p>其中6表示开始行号，$表示最后一行，d表示删除，整个命令表示从第6行开始到最后一行全部删除；<br>再例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:.,$d</span><br></pre></td></tr></table></figure>
+<p>其中 <strong>.</strong> 表示当前光标所在位置；<br>如果想从第6行删除到最后，保留最后两行，可以这样操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:6,$-2d</span><br></pre></td></tr></table></figure>
+<p>同样，可以使用末行模式进行具体行的拷贝，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:.,+5y</span><br></pre></td></tr></table></figure>
+<p>从光标所在行开始，向下拷贝5行，然后可以在编辑模式下使用p命令进行拷贝；</p>
+<p>####11. vi（vim）撤销&amp;重做</p>
+<ul>
+<li>u 撤销；</li>
+<li>ctrl+r 重做撤销的操作；</li>
+<li><strong>.</strong> 重复上一步的操作；</li>
+</ul>
+<p>####12. vi（vim）set设置</p>
+<ul>
+<li>set nu 显示行号；</li>
+<li>set nonu 隐藏行号；</li>
+<li>set readonly 设置当前文本为只读，即使修改了也不能保存；</li>
+</ul>
+<p>####13. vi（vim）查找</p>
+<ul>
+<li>/aaa 查找关键字aaa，n向下查找下一个，N向上查找下一个；</li>
+<li>:?aaa 末行模式查找关键字aaa，和直接/不同的是，它默认是向上查找；</li>
+</ul>
+<p>####14. vi（vim）查找并替换s</p>
+<ul>
+<li>从第1行到最后一行，将aaa替换为bbb，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:1,$s/aaa/bbb/</span><br></pre></td></tr></table></figure>
+<p>注意：以上只是将每一行第一个出现的aaa给替换成了bbb，如果同一行有多个aaa将不被替换。如果整行都要替换，需加g，i为忽略大小写，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:1,$s/aaa/bbb/gi</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果将全文中的某个关键字替换，可以使用%，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:%s/aaa/bbb/gi</span><br></pre></td></tr></table></figure>
+<p>####15. vi（vim）编辑模式中执行命令！</p>
+<ul>
+<li>如果在文本编辑模式下，执行命令，可以使用！+指令，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:!ls -l /</span><br></pre></td></tr></table></figure>
+<p>一般在配置文件中，可能会遇到某个文件名忘记了，那么就可使用执行命令模式，去查看文件名然后再回车，继续文件编辑模式，非常方便。</p>
+<h2 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h2><p>####1. 首先看下grep的用法</p>
+<ul>
+<li>查看包含”after”的行，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# grep &quot;after&quot; profile </span><br><span class="line">            if [ &quot;$2&quot; = &quot;after&quot; ] ; then</span><br><span class="line">    pathmunge /usr/local/sbin after</span><br><span class="line">    pathmunge /usr/sbin after</span><br><span class="line">    pathmunge /sbin after</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查看不包含所定义关键字的行，加上-v：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# grep -v &quot;after&quot; profile</span><br></pre></td></tr></table></figure>
+<p>####2. 匹配操作符</p>
+<ul>
+<li>\ 转义字符；</li>
+<li><strong>.</strong> 匹配任意单个字符；</li>
+<li>[12389],[^12],[a-k] 字符序列单字符占位，匹配[]中任意字符；</li>
+<li>^ 匹配行首；</li>
+<li>$ 匹配行尾；</li>
+<li>\&lt;,> 单词首尾边界；</li>
+<li>| 连接操作符；</li>
+<li>(,) 选择操作符；</li>
+<li>\n 反向引用；</li>
+<li>[^0-9] 匹配任意不在0-9范围内的字符串；</li>
+</ul>
+<p>####3. 重复操作符<br>注意：其中斜体的为扩展正则表达式，使用时需要转义 \?,+,{,|,(</p>
+<ul>
+<li>? 匹配前边子表达式0到1次；</li>
+<li><ul>
+<li>匹配0到多次；</li>
+</ul>
+</li>
+<li><em>+ 匹配1到多次</em>；</li>
+<li><em>{n} 匹配n次</em>；</li>
+<li><em>{n,} 匹配n到多次</em>；</li>
+<li><em>{n,m} 匹配n到m次</em>；</li>
+<li><strong>.*</strong> 匹配任意单个或多个字符；</li>
+<li>搜索含有某个单词的行记录，如下所示：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep &quot;\&lt;aaa\&gt;&quot; profile</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2018/02/05/Linux常用命令（一）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helon">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helon">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/02/05/Linux常用命令（一）/" itemprop="url">Linux常用命令（一）</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-05T15:03:12+08:00">
                 2018-02-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="1-shell"><a href="#1-shell" class="headerlink" title="1.shell"></a>1.shell</h4><p> 在计算机中，shell俗称壳（用来区别于核），基本上是一个命令解释器，接收用户指令。</p>
+<h4 id="2-bash"><a href="#2-bash" class="headerlink" title="2. bash"></a>2. bash</h4><p> bash就是一种Linux默认的shell，它解释用户输入的字符串（空白符切割，第一个元素作为命令），判断是内部或外部指令，如果是内部命令直接执行，如果是外部命令，在$PATH（环境变量）中给定的目录中从左到右寻找该指令。总之，bash是一个解释器、执行器。</p>
+<h4 id="3-type"><a href="#3-type" class="headerlink" title="3. type"></a>3. type</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# type -a ifconfig</span><br><span class="line">ifconfig is /sbin/ifconfig</span><br></pre></td></tr></table></figure>
+<p>表示ifconfig这个命令程序所在位置；type可以看出当前命令是内部OR外部命令，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# type cd</span><br><span class="line">cd is a shell builtin</span><br></pre></td></tr></table></figure></p>
+<p>builtin表示内部命令。输入help回车，可以查看所有的内部命令；</p>
+<h4 id="4-file"><a href="#4-file" class="headerlink" title="4. file"></a>4. file</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# file /sbin/ifconfig</span><br><span class="line">/sbin/ifconfig: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.18, stripped</span><br></pre></td></tr></table></figure>
+<p>检查当前外部命令是什么类型的文件，从返回的内容中可以看出，ifconfig是一个二进制程序（ELF表示Linux系统中的二进制程序），类似于windows中的.exe程序；</p>
+<h4 id="5-man"><a href="#5-man" class="headerlink" title="5. man"></a>5. man</h4><p> 查看某个命令的帮助文档，如果执行提示没有找到该指令，可以通过yum install man来进行安装（一般使用yum install man-pages安装，可以将man相关指令集全部安装）；<br> 外部命令分为8类：</p>
+<ul>
+<li>1.用户命令</li>
+<li>2.系统调用</li>
+<li>3.库用户</li>
+<li>4.特殊文件（设备文件）</li>
+<li>5.文件格式（配置文件的语法）</li>
+<li>6.游戏</li>
+<li>7.杂项（Miscellaneous）</li>
+<li>8.管理命令（/sbin,/usr/sbin,/usr/local/sbin）</li>
+</ul>
+<h4 id="6-help"><a href="#6-help" class="headerlink" title="6. help"></a>6. help</h4><p>可以通过help查看内部命令的帮助文档，直接输入help回车，能显示所有内部命令；</p>
+<h4 id="7-yum"><a href="#7-yum" class="headerlink" title="7. yum"></a>7. yum</h4><p> 是一个Python脚本语言，解释执行指令集；</p>
+<h4 id="8-df"><a href="#8-df" class="headerlink" title="8. df"></a>8. df</h4><p>查看文件系统分区<br>文件系统层次化标准：</p>
+<ul>
+<li>/boot：系统启动相关的文件，如内核、initrd，以及grub（bootLoader）；</li>
+<li>/dev:设备文件;</li>
+<li>/etc:配置文件;</li>
+<li>/home:用户的家目录，每一个用户的家目录通常默认为/home/USERNAME;</li>
+<li>/root:管理员的家目录；</li>
+<li>/lib:库文件</li>
+<li>/media：挂载点目录，移动设备</li>
+<li>/mnt:挂载点目录，额外的临时文件系统</li>
+<li>/opt:可选目录，第三方程序的安装目录</li>
+<li>/proc:伪文件系统，内核映射文件</li>
+<li>/sys:伪文件系统，跟硬件设备相关的属性映射文件</li>
+<li>/tmp:临时文件，/var/tmp</li>
+<li>/var:可变化的文件</li>
+<li>/bin:可执行文件，用户命令</li>
+<li>/sbin:管理命令</li>
+</ul>
+<h4 id="9-ls-l"><a href="#9-ls-l" class="headerlink" title="9. ls -l"></a>9. ls -l</h4><p>文件类型：</p>
+<ul>
+<li>-：普通文件(f);</li>
+<li>d:目录文件；</li>
+<li>b:块设备文件（block）</li>
+<li>c:字符设备文件（character）；</li>
+<li>l：符号链接文件（symbolic link file）；</li>
+<li>p：命令管道文件（pipe）；</li>
+<li>s:套接字文件（socket）；<h4 id="10-mkdir"><a href="#10-mkdir" class="headerlink" title="10. mkdir"></a>10. mkdir</h4>一次创建多个目录</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# mkdir -p ./x/&#123;a,b,c&#125;</span><br><span class="line">[root@node01 ~]# ll ./x</span><br><span class="line">total 12</span><br><span class="line">drwxr-xr-x. 2 root root 4096 Sep  6 05:52 a</span><br><span class="line">drwxr-xr-x. 2 root root 4096 Sep  6 05:52 b</span><br><span class="line">drwxr-xr-x. 2 root root 4096 Sep  6 05:52 c</span><br></pre></td></tr></table></figure>
+<h4 id="11-ln"><a href="#11-ln" class="headerlink" title="11. ln"></a>11. ln</h4><p>硬链接：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# vi a</span><br><span class="line">[root@node01 ~]# </span><br><span class="line">[root@node01 ~]# ln a b</span><br><span class="line">[root@node01 ~]# </span><br><span class="line">[root@node01 ~]# ll</span><br><span class="line">total 32</span><br><span class="line">-rw-r--r--. 2 root root    6 Sep  6 05:59 a</span><br><span class="line">-rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">-rw-r--r--. 2 root root    6 Sep  6 05:59 b</span><br><span class="line">-rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">-rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
+<p>以上是将b硬链接a，新创建的a中有内容”hello”，vi b打开发现也有同样的内容，此时修改任意一个文件内容，两边内容将保持同步。<br>查看一下a 和 b文件的inode号，发现a 和 b的索引号都是一样（有点类似java里面两个变量引用同一个对象），如果此时删除a或者b两者相互不影响，删除一个另一个还正常存在，并且注意-rw-r–r–. 2 这个链接数，在没有链接的时候显示为1，硬链接后显示为2，最后删除任意一个将会变为1：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# ll -i</span><br><span class="line">total 32</span><br><span class="line">1966096 -rw-r--r--. 2 root root   13 Sep  6 06:02 a</span><br><span class="line">1966089 -rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">1966096 -rw-r--r--. 2 root root   13 Sep  6 06:02 b</span><br><span class="line">1966082 -rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">1966083 -rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">1966091 drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
+<p>软链接：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# ln -s a c</span><br><span class="line">[root@node01 ~]# ll</span><br><span class="line">total 28</span><br><span class="line">-rw-r--r--. 1 root root   13 Sep  6 06:02 a</span><br><span class="line">-rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">lrwxrwxrwx. 1 root root    1 Sep  6 06:14 c -&gt; a</span><br><span class="line">-rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">-rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
+<p>以上是将c软链接到a，此时修改任意一个文件两者都将同时修改，但是如果将a删除掉，c链接将找不到实体文件，ll查看的时候linux将会给出明显提示，这点是和硬链接的不同之处（有点类似windows中的快捷方式）。</p>
+<h4 id="12-stat"><a href="#12-stat" class="headerlink" title="12. stat"></a>12. stat</h4><p>查看文件的元数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# stat profile </span><br><span class="line">  File: `profile&apos;</span><br><span class="line">  Size: 1796      	Blocks: 8          IO Block: 4096   regular file</span><br><span class="line">Device: 803h/2051d	Inode: 1966096     Links: 1</span><br><span class="line">Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)</span><br><span class="line">Access: 2018-09-06 06:27:27.900118033 +0800</span><br><span class="line">Modify: 2018-09-06 06:27:27.900118033 +0800</span><br><span class="line">Change: 2018-09-06 06:27:27.900118033 +0800</span><br></pre></td></tr></table></figure>
+<h4 id="13-touch"><a href="#13-touch" class="headerlink" title="13. touch"></a>13. touch</h4><p>如果touch一个存在的文件，那么touch之后文件的元数据中access、modify和change时间都将会变为最新的，如果touch一个不存在的文件，那么将会创建它。</p>
+<h4 id="14-du"><a href="#14-du" class="headerlink" title="14. du"></a>14. du</h4><p>也是查看使用空间的，与df不同的是，du查看的是目录和文件的占用空间；</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h </span><br><span class="line">4.0K	./x/a</span><br><span class="line">4.0K	./x/c</span><br><span class="line">4.0K	./x/b</span><br><span class="line">16K	./x</span><br><span class="line">68K	.</span><br></pre></td></tr></table></figure>
+<p>以上是查看当前目录及当前目录下子目录的大小，最后一个为目录及子目录的大小总和；</p>
+<p>查看指定文件大小：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h profile </span><br><span class="line">4.0K	profile</span><br></pre></td></tr></table></figure></p>
+<p>查看指定目录大小：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h x</span><br><span class="line">4.0K	x/a</span><br><span class="line">4.0K	x/c</span><br><span class="line">4.0K	x/b</span><br><span class="line">16K	x</span><br></pre></td></tr></table></figure>
+<p>查看多个文件大小：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h a profile </span><br><span class="line">0	a</span><br><span class="line">4.0K	profile</span><br></pre></td></tr></table></figure>
+<p>查看总大小（-h转换为人可读的大小单位）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h -s</span><br><span class="line">68K	.</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2016/05/11/Redis学习笔记（一）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helon">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helon">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/05/11/Redis学习笔记（一）/" itemprop="url">Redis学习笔记（一）</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-11T21:33:02+08:00">
+                2016-05-11
               </time>
             
 
@@ -348,22 +1060,22 @@
             <h1 id="Redis安装"><a href="#Redis安装" class="headerlink" title="Redis安装"></a>Redis安装</h1><h2 id="1-redis的源码压缩包上传到linux目录下"><a href="#1-redis的源码压缩包上传到linux目录下" class="headerlink" title="1.redis的源码压缩包上传到linux目录下"></a>1.redis的源码压缩包上传到linux目录下</h2><p>我使用的是<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-4.0.2.tar.gz</span><br></pre></td></tr></table></figure></p>
 <h2 id="2-解压以上压缩包到-usr-local中，如下："><a href="#2-解压以上压缩包到-usr-local中，如下：" class="headerlink" title="2.解压以上压缩包到/usr/local中，如下："></a>2.解压以上压缩包到/usr/local中，如下：</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-4.0.2</span><br></pre></td></tr></table></figure>
 <p>因为redis是C语言编写的，所以一般目录下会有一个Makefile文件，使用make命令可以对源码进行编译，如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-01.png">
-<h2 id="3-使用make对源码进行编译，直接在-usr-local-redis-4-0-2目录下执行make命令；"><a href="#3-使用make对源码进行编译，直接在-usr-local-redis-4-0-2目录下执行make命令；" class="headerlink" title="3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；"></a>3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；</h2><h2 id="4-仍然在当前目录下，输入make-install-PREFIX-usr-local-redis-进行安装操作，其中PREFIX是安装目录，一般安装到-usr-local-redis目录下，如果redis目录不存在，会自动创建，如下图："><a href="#4-仍然在当前目录下，输入make-install-PREFIX-usr-local-redis-进行安装操作，其中PREFIX是安装目录，一般安装到-usr-local-redis目录下，如果redis目录不存在，会自动创建，如下图：" class="headerlink" title="4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图："></a>4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图：</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-02.png">
+<img src="/2016/05/11/Redis学习笔记（一）/redis1-01.png">
+<h2 id="3-使用make对源码进行编译，直接在-usr-local-redis-4-0-2目录下执行make命令；"><a href="#3-使用make对源码进行编译，直接在-usr-local-redis-4-0-2目录下执行make命令；" class="headerlink" title="3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；"></a>3.使用make对源码进行编译，直接在/usr/local/redis-4.0.2目录下执行make命令；</h2><h2 id="4-仍然在当前目录下，输入make-install-PREFIX-usr-local-redis-进行安装操作，其中PREFIX是安装目录，一般安装到-usr-local-redis目录下，如果redis目录不存在，会自动创建，如下图："><a href="#4-仍然在当前目录下，输入make-install-PREFIX-usr-local-redis-进行安装操作，其中PREFIX是安装目录，一般安装到-usr-local-redis目录下，如果redis目录不存在，会自动创建，如下图：" class="headerlink" title="4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图："></a>4.仍然在当前目录下，输入make install PREFIX=/usr/local/redis 进行安装操作，其中PREFIX是安装目录，一般安装到/usr/local/redis目录下，如果redis目录不存在，会自动创建，如下图：</h2><img src="/2016/05/11/Redis学习笔记（一）/redis1-02.png">
 <h1 id="Redis启动连接"><a href="#Redis启动连接" class="headerlink" title="Redis启动连接"></a>Redis启动连接</h1><h2 id="1-前端启动"><a href="#1-前端启动" class="headerlink" title="1.前端启动"></a>1.前端启动</h2><p>在/usr/local/redis/bin目录下，使用./redis-server启动redis；</p>
-<h2 id="2-后端启动"><a href="#2-后端启动" class="headerlink" title="2.后端启动"></a>2.后端启动</h2><h3 id="首先拷贝源文件目录下的redis-conf配置文件到-usr-local-redis-bin目录下，编辑redis-conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图："><a href="#首先拷贝源文件目录下的redis-conf配置文件到-usr-local-redis-bin目录下，编辑redis-conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：" class="headerlink" title="首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图："></a>首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-03.png">
+<h2 id="2-后端启动"><a href="#2-后端启动" class="headerlink" title="2.后端启动"></a>2.后端启动</h2><h3 id="首先拷贝源文件目录下的redis-conf配置文件到-usr-local-redis-bin目录下，编辑redis-conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图："><a href="#首先拷贝源文件目录下的redis-conf配置文件到-usr-local-redis-bin目录下，编辑redis-conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：" class="headerlink" title="首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图："></a>首先拷贝源文件目录下的redis.conf配置文件到/usr/local/redis/bin目录下，编辑redis.conf文件，修改daemonize属性为yes，表示使用后台启动模式，默认是no，如下图：</h3><img src="/2016/05/11/Redis学习笔记（一）/redis1-03.png">
 <h3 id="启动redis"><a href="#启动redis" class="headerlink" title="启动redis"></a>启动redis</h3><p>./redis-server redis.conf</p>
 <h3 id="查看是否启动"><a href="#查看是否启动" class="headerlink" title="查看是否启动"></a>查看是否启动</h3><p>ps -aux|grep redis<br>如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-04.png">
-<h2 id="3-需要注意的问题"><a href="#3-需要注意的问题" class="headerlink" title="3.需要注意的问题"></a>3.需要注意的问题</h2><h3 id="基于安全的考虑，redis默认bind的ip是本机127-0-0-1，所以只能在本机进行连接redis，连接方式如下图："><a href="#基于安全的考虑，redis默认bind的ip是本机127-0-0-1，所以只能在本机进行连接redis，连接方式如下图：" class="headerlink" title="基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图："></a>基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-05.png">
+<img src="/2016/05/11/Redis学习笔记（一）/redis1-04.png">
+<h2 id="3-需要注意的问题"><a href="#3-需要注意的问题" class="headerlink" title="3.需要注意的问题"></a>3.需要注意的问题</h2><h3 id="基于安全的考虑，redis默认bind的ip是本机127-0-0-1，所以只能在本机进行连接redis，连接方式如下图："><a href="#基于安全的考虑，redis默认bind的ip是本机127-0-0-1，所以只能在本机进行连接redis，连接方式如下图：" class="headerlink" title="基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图："></a>基于安全的考虑，redis默认bind的ip是本机127.0.0.1，所以只能在本机进行连接redis，连接方式如下图：</h3><img src="/2016/05/11/Redis学习笔记（一）/redis1-05.png">
 <p>此时为默认连接localhost，端口为6379的redis服务</p>
-<h3 id="如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing-192-168-1-1-192-168-1-2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图："><a href="#如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing-192-168-1-1-192-168-1-2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：" class="headerlink" title="如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图："></a>如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-06.png">
-<h3 id="如果报以下错误，如何解决："><a href="#如果报以下错误，如何解决：" class="headerlink" title="如果报以下错误，如何解决："></a>如果报以下错误，如何解决：</h3><img src="/2018/02/05/Redis学习笔记（一）/redis1-07.png">
+<h3 id="如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing-192-168-1-1-192-168-1-2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图："><a href="#如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing-192-168-1-1-192-168-1-2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：" class="headerlink" title="如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图："></a>如果在其他服务连接redis或使用客户端连接，需要将bind的ip修改为指定的能够连接该redis服务的ip，可绑定多个，例如：bing 192.168.1.1 192.168.1.2，或者直接注释掉，那么所有服务都可以连接（配置完后重启redis服务），如下图：</h3><img src="/2016/05/11/Redis学习笔记（一）/redis1-06.png">
+<h3 id="如果报以下错误，如何解决："><a href="#如果报以下错误，如何解决：" class="headerlink" title="如果报以下错误，如何解决："></a>如果报以下错误，如何解决：</h3><img src="/2016/05/11/Redis学习笔记（一）/redis1-07.png">
 <p>以上截图大概意思是redis开启了保护模式，其实在redis3.2版本之后，redis.conf配置文件中多了个protected-mode属性，默认值为yes，表示开启了保护模式。<br>可通过两种方式解决：<br><br><em>直接关闭保护模式，将值改为no；<br><br></em>配置bind，或者设置密码，放开requirepass属性，值即为密码，如下图：</p>
-<img src="/2018/02/05/Redis学习笔记（一）/redis1-08.png">
-<h3 id="可以在-etc-rc-local中配置开机自启动"><a href="#可以在-etc-rc-local中配置开机自启动" class="headerlink" title="可以在/etc/rc.local中配置开机自启动"></a>可以在/etc/rc.local中配置开机自启动</h3><h2 id="4-日志存储，可修改为自定义目录，如下图："><a href="#4-日志存储，可修改为自定义目录，如下图：" class="headerlink" title="4.日志存储，可修改为自定义目录，如下图："></a>4.日志存储，可修改为自定义目录，如下图：</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-09.png">
-<h2 id="5-数据文件存储，可修改为自定义目录，如下图："><a href="#5-数据文件存储，可修改为自定义目录，如下图：" class="headerlink" title="5.数据文件存储，可修改为自定义目录，如下图："></a>5.数据文件存储，可修改为自定义目录，如下图：</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-10.png">
-<h2 id="6-报错解决：-bin-sh-cc-command-not-found"><a href="#6-报错解决：-bin-sh-cc-command-not-found" class="headerlink" title="6.报错解决：/bin/sh: cc: command not found"></a>6.报错解决：/bin/sh: cc: command not found</h2><img src="/2018/02/05/Redis学习笔记（一）/redis1-11.png">
+<img src="/2016/05/11/Redis学习笔记（一）/redis1-08.png">
+<h3 id="可以在-etc-rc-local中配置开机自启动"><a href="#可以在-etc-rc-local中配置开机自启动" class="headerlink" title="可以在/etc/rc.local中配置开机自启动"></a>可以在/etc/rc.local中配置开机自启动</h3><h2 id="4-日志存储，可修改为自定义目录，如下图："><a href="#4-日志存储，可修改为自定义目录，如下图：" class="headerlink" title="4.日志存储，可修改为自定义目录，如下图："></a>4.日志存储，可修改为自定义目录，如下图：</h2><img src="/2016/05/11/Redis学习笔记（一）/redis1-09.png">
+<h2 id="5-数据文件存储，可修改为自定义目录，如下图："><a href="#5-数据文件存储，可修改为自定义目录，如下图：" class="headerlink" title="5.数据文件存储，可修改为自定义目录，如下图："></a>5.数据文件存储，可修改为自定义目录，如下图：</h2><img src="/2016/05/11/Redis学习笔记（一）/redis1-10.png">
+<h2 id="6-报错解决：-bin-sh-cc-command-not-found"><a href="#6-报错解决：-bin-sh-cc-command-not-found" class="headerlink" title="6.报错解决：/bin/sh: cc: command not found"></a>6.报错解决：/bin/sh: cc: command not found</h2><img src="/2016/05/11/Redis学习笔记（一）/redis1-11.png">
 <p>以上报错，是由于新的linux系统中没有安装gcc环境，需要安装gcc，可以直接使用yum install gcc安装，安装步骤如下：<br><br><em>安装<br><br>yum install gcc<br><br></em>验证是否安装成功<br><br>rpm -qa | grep gcc<br><br>删除原redis解压目录，重新解压，编译安装</p>
 
           
@@ -546,215 +1258,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://9080.github.io/2015/12/31/Linux常用命令（一）/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Helon">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Helon">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2015/12/31/Linux常用命令（一）/" itemprop="url">Linux常用命令（一）</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-12-31T16:28:02+08:00">
-                2015-12-31
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="1-shell"><a href="#1-shell" class="headerlink" title="1.shell"></a>1.shell</h4><p> 在计算机中，shell俗称壳（用来区别于核），基本上是一个命令解释器，接收用户指令。</p>
-<h4 id="2-bash"><a href="#2-bash" class="headerlink" title="2. bash"></a>2. bash</h4><p> bash就是一种Linux默认的shell，它解释用户输入的字符串（空白符切割，第一个元素作为命令），判断是内部或外部指令，如果是内部命令直接执行，如果是外部命令，在$PATH（环境变量）中给定的目录中从左到右寻找该指令。总之，bash是一个解释器、执行器。</p>
-<h4 id="3-type"><a href="#3-type" class="headerlink" title="3. type"></a>3. type</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# type -a ifconfig</span><br><span class="line">ifconfig is /sbin/ifconfig</span><br></pre></td></tr></table></figure>
-<p>表示ifconfig这个命令程序所在位置；type可以看出当前命令是内部OR外部命令，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# type cd</span><br><span class="line">cd is a shell builtin</span><br></pre></td></tr></table></figure></p>
-<p>builtin表示内部命令。输入help回车，可以查看所有的内部命令；</p>
-<h4 id="4-file"><a href="#4-file" class="headerlink" title="4. file"></a>4. file</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# file /sbin/ifconfig</span><br><span class="line">/sbin/ifconfig: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.18, stripped</span><br></pre></td></tr></table></figure>
-<p>检查当前外部命令是什么类型的文件，从返回的内容中可以看出，ifconfig是一个二进制程序（ELF表示Linux系统中的二进制程序），类似于windows中的.exe程序；</p>
-<h4 id="5-man"><a href="#5-man" class="headerlink" title="5. man"></a>5. man</h4><p> 查看某个命令的帮助文档，如果执行提示没有找到该指令，可以通过yum install man来进行安装（一般使用yum install man-pages安装，可以将man相关指令集全部安装）；<br> 外部命令分为8类：</p>
-<ul>
-<li>1.用户命令</li>
-<li>2.系统调用</li>
-<li>3.库用户</li>
-<li>4.特殊文件（设备文件）</li>
-<li>5.文件格式（配置文件的语法）</li>
-<li>6.游戏</li>
-<li>7.杂项（Miscellaneous）</li>
-<li>8.管理命令（/sbin,/usr/sbin,/usr/local/sbin）</li>
-</ul>
-<h4 id="6-help"><a href="#6-help" class="headerlink" title="6. help"></a>6. help</h4><p>可以通过help查看内部命令的帮助文档，直接输入help回车，能显示所有内部命令；</p>
-<h4 id="7-yum"><a href="#7-yum" class="headerlink" title="7. yum"></a>7. yum</h4><p> 是一个Python脚本语言，解释执行指令集；</p>
-<h4 id="8-df"><a href="#8-df" class="headerlink" title="8. df"></a>8. df</h4><p>查看文件系统分区<br>文件系统层次化标准：</p>
-<ul>
-<li>/boot：系统启动相关的文件，如内核、initrd，以及grub（bootLoader）；</li>
-<li>/dev:设备文件;</li>
-<li>/etc:配置文件;</li>
-<li>/home:用户的家目录，每一个用户的家目录通常默认为/home/USERNAME;</li>
-<li>/root:管理员的家目录；</li>
-<li>/lib:库文件</li>
-<li>/media：挂载点目录，移动设备</li>
-<li>/mnt:挂载点目录，额外的临时文件系统</li>
-<li>/opt:可选目录，第三方程序的安装目录</li>
-<li>/proc:伪文件系统，内核映射文件</li>
-<li>/sys:伪文件系统，跟硬件设备相关的属性映射文件</li>
-<li>/tmp:临时文件，/var/tmp</li>
-<li>/var:可变化的文件</li>
-<li>/bin:可执行文件，用户命令</li>
-<li>/sbin:管理命令</li>
-</ul>
-<h4 id="9-ls-l"><a href="#9-ls-l" class="headerlink" title="9. ls -l"></a>9. ls -l</h4><p>文件类型：</p>
-<ul>
-<li>-：普通文件(f);</li>
-<li>d:目录文件；</li>
-<li>b:块设备文件（block）</li>
-<li>c:字符设备文件（character）；</li>
-<li>l：符号链接文件（symbolic link file）；</li>
-<li>p：命令管道文件（pipe）；</li>
-<li>s:套接字文件（socket）；<h4 id="10-mkdir"><a href="#10-mkdir" class="headerlink" title="10. mkdir"></a>10. mkdir</h4>一次创建多个目录</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# mkdir -p ./x/&#123;a,b,c&#125;</span><br><span class="line">[root@node01 ~]# ll ./x</span><br><span class="line">total 12</span><br><span class="line">drwxr-xr-x. 2 root root 4096 Sep  6 05:52 a</span><br><span class="line">drwxr-xr-x. 2 root root 4096 Sep  6 05:52 b</span><br><span class="line">drwxr-xr-x. 2 root root 4096 Sep  6 05:52 c</span><br></pre></td></tr></table></figure>
-<h4 id="11-ln"><a href="#11-ln" class="headerlink" title="11. ln"></a>11. ln</h4><p>硬链接：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# vi a</span><br><span class="line">[root@node01 ~]# </span><br><span class="line">[root@node01 ~]# ln a b</span><br><span class="line">[root@node01 ~]# </span><br><span class="line">[root@node01 ~]# ll</span><br><span class="line">total 32</span><br><span class="line">-rw-r--r--. 2 root root    6 Sep  6 05:59 a</span><br><span class="line">-rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">-rw-r--r--. 2 root root    6 Sep  6 05:59 b</span><br><span class="line">-rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">-rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
-<p>以上是将b硬链接a，新创建的a中有内容”hello”，vi b打开发现也有同样的内容，此时修改任意一个文件内容，两边内容将保持同步。<br>查看一下a 和 b文件的inode号，发现a 和 b的索引号都是一样（有点类似java里面两个变量引用同一个对象），如果此时删除a或者b两者相互不影响，删除一个另一个还正常存在，并且注意-rw-r–r–. 2 这个链接数，在没有链接的时候显示为1，硬链接后显示为2，最后删除任意一个将会变为1：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# ll -i</span><br><span class="line">total 32</span><br><span class="line">1966096 -rw-r--r--. 2 root root   13 Sep  6 06:02 a</span><br><span class="line">1966089 -rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">1966096 -rw-r--r--. 2 root root   13 Sep  6 06:02 b</span><br><span class="line">1966082 -rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">1966083 -rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">1966091 drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
-<p>软链接：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# ln -s a c</span><br><span class="line">[root@node01 ~]# ll</span><br><span class="line">total 28</span><br><span class="line">-rw-r--r--. 1 root root   13 Sep  6 06:02 a</span><br><span class="line">-rw-------. 1 root root  900 Aug 20 02:08 anaconda-ks.cfg</span><br><span class="line">lrwxrwxrwx. 1 root root    1 Sep  6 06:14 c -&gt; a</span><br><span class="line">-rw-r--r--. 1 root root 8815 Aug 20 02:08 install.log</span><br><span class="line">-rw-r--r--. 1 root root 3384 Aug 20 02:07 install.log.syslog</span><br><span class="line">drwxr-xr-x. 5 root root 4096 Sep  6 05:52 x</span><br></pre></td></tr></table></figure>
-<p>以上是将c软链接到a，此时修改任意一个文件两者都将同时修改，但是如果将a删除掉，c链接将找不到实体文件，ll查看的时候linux将会给出明显提示，这点是和硬链接的不同之处（有点类似windows中的快捷方式）。</p>
-<h4 id="12-stat"><a href="#12-stat" class="headerlink" title="12. stat"></a>12. stat</h4><p>查看文件的元数据</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# stat profile </span><br><span class="line">  File: `profile&apos;</span><br><span class="line">  Size: 1796      	Blocks: 8          IO Block: 4096   regular file</span><br><span class="line">Device: 803h/2051d	Inode: 1966096     Links: 1</span><br><span class="line">Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)</span><br><span class="line">Access: 2018-09-06 06:27:27.900118033 +0800</span><br><span class="line">Modify: 2018-09-06 06:27:27.900118033 +0800</span><br><span class="line">Change: 2018-09-06 06:27:27.900118033 +0800</span><br></pre></td></tr></table></figure>
-<h4 id="13-touch"><a href="#13-touch" class="headerlink" title="13. touch"></a>13. touch</h4><p>如果touch一个存在的文件，那么touch之后文件的元数据中access、modify和change时间都将会变为最新的，如果touch一个不存在的文件，那么将会创建它。</p>
-<h4 id="14-du"><a href="#14-du" class="headerlink" title="14. du"></a>14. du</h4><p>也是查看使用空间的，与df不同的是，du查看的是目录和文件的占用空间；</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h </span><br><span class="line">4.0K	./x/a</span><br><span class="line">4.0K	./x/c</span><br><span class="line">4.0K	./x/b</span><br><span class="line">16K	./x</span><br><span class="line">68K	.</span><br></pre></td></tr></table></figure>
-<p>以上是查看当前目录及当前目录下子目录的大小，最后一个为目录及子目录的大小总和；</p>
-<p>查看指定文件大小：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h profile </span><br><span class="line">4.0K	profile</span><br></pre></td></tr></table></figure></p>
-<p>查看指定目录大小：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h x</span><br><span class="line">4.0K	x/a</span><br><span class="line">4.0K	x/c</span><br><span class="line">4.0K	x/b</span><br><span class="line">16K	x</span><br></pre></td></tr></table></figure>
-<p>查看多个文件大小：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h a profile </span><br><span class="line">0	a</span><br><span class="line">4.0K	profile</span><br></pre></td></tr></table></figure>
-<p>查看总大小（-h转换为人可读的大小单位）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@node01 ~]# du -h -s</span><br><span class="line">68K	.</span><br></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -805,7 +1308,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">5</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -816,7 +1319,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -827,7 +1330,7 @@
               
               <div class="site-state-item site-state-tags">
                 
-                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-count">8</span>
                   <span class="site-state-item-name">标签</span>
                 
               </div>
