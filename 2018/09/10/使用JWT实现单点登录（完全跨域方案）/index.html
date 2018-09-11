@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-01.jpg">
 <meta property="og:image" content="https://9080.github.io/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-02.jpg">
-<meta property="og:updated_time" content="2018-09-10T08:53:04.156Z">
+<meta property="og:updated_time" content="2018-09-11T01:36:41.645Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用JWT实现单点登录（完全跨域方案）">
 <meta name="twitter:description" content="首先介绍一下什么是JSON Web Token（JWT）？官方文档是这样解释的：JSON Web Token（JWT）是一个开放标准（RFC 7519），它定义了一种紧凑且独立的方式，可以在各方之间作为JSON对象安全地传输信息。此信息可以通过数字签名进行验证和信任。JWT可以使用秘密（使用HMAC算法）或使用RSA或ECDSA的公钥/私钥对进行签名。虽然JWT可以加密以在各方之间提供保密，但只将">
@@ -377,7 +377,7 @@
 <h2 id="以下是我实际项目中的应用分析"><a href="#以下是我实际项目中的应用分析" class="headerlink" title="以下是我实际项目中的应用分析"></a>以下是我实际项目中的应用分析</h2><p>首先看一下大致的架构及流程图：<br><img src="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-01.jpg"><br><img src="/2018/09/10/使用JWT实现单点登录（完全跨域方案）/JWT-02.jpg"></p>
 <p><strong>主要有以下三步：</strong></p>
 <ul>
-<li>项目一开始我先封装了一个JWTHelper工具包，主要提供了生成JWT、解析JWT以及校验JWT的方法，其他还有一些加密相关操作，稍后我会以代码的形式介绍下代码。工具包写好后我将打包上传到私服，能够随时依赖下载使用；</li>
+<li>项目一开始我先封装了一个JWTHelper工具包（GitHub下载地址：<a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:9080/jwt-helper.git），主要提供了生成JWT、解析JWT以及校验JWT的方法，其他还有一些加密相关操作，稍后我会以代码的形式介绍下代码。工具包写好后我将打包上传到私服，能够随时依赖下载使用；</li>
 <li>接下来，我在客户端项目中依赖JWTHelper工具包，并添加Interceptor拦截器，拦截需要校验登录的接口。拦截器中校验JWT有效性，并在response中重新设置JWT的新值；</li>
 <li>最后在JWT服务端，依赖JWT工具包，在登录方法中，需要在登录校验成功后调用生成JWT方法，生成一个JWT令牌并且设置到response的header中。</li>
 </ul>
@@ -406,7 +406,7 @@
 <li><strong>客户端拦截器在XML文件中配置：</strong></li>
 </ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;!--拦截器配置--&gt;</span><br><span class="line">   &lt;mvc:interceptors&gt;</span><br><span class="line">       &lt;mvc:interceptor&gt;</span><br><span class="line">        &lt;!--需拦截url配置--&gt;</span><br><span class="line">           &lt;mvc:exclude-mapping path=&quot;/api/aa/bb/**&quot; /&gt;</span><br><span class="line">           &lt;mvc:exclude-mapping path=&quot;/api/aa/cc/test&quot; /&gt;</span><br><span class="line">           &lt;bean id=&quot;validateLoginInterceptor&quot; class=&quot;com.xxx.ValidateLoginInterceptor&quot; /&gt;</span><br><span class="line">       &lt;/mvc:interceptor&gt;</span><br><span class="line">   &lt;/mvc:interceptors&gt;</span><br></pre></td></tr></table></figure>
-<p>到此，后台服务的配置已经完成，下一步就需要前端页面将JWT令牌从response响应头中取出，然后存入localstorage或cookie中。但是遇到跨域场景，处理起来就会比较复杂，因为一旦在浏览器中跨域将获取不到localstorage中的JWT令牌。例如<a href="http://www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage（[参考博文](https://www.cnblogs.com/tyrion1990/p/8134384.html)），具体我使用代码分享的方式来分析。" target="_blank" rel="noopener">www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage（[参考博文](https://www.cnblogs.com/tyrion1990/p/8134384.html)），具体我使用代码分享的方式来分析。</a></p>
+<p>到此，后台服务的配置已经完成，下一步就需要前端页面将JWT令牌从response响应头中取出，然后存入localstorage或cookie中。但是遇到跨域场景，处理起来就会比较复杂，因为一旦在浏览器中跨域将获取不到localstorage中的JWT令牌。例如<a href="http://www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage" target="_blank" rel="noopener">www.a.com域下的JWT，在www.b.com域下是获取不到的，所以我选择了一种页面跨域的方式进行处理，使用iframe+H5的postMessage</a>  (<a href="https://www.cnblogs.com/tyrion1990/p/8134384.html" target="_blank" rel="noopener">参考博文</a>)  ，具体我使用代码分享的方式来分析。</p>
 <ul>
 <li><strong>前端页面js代码（服务端）：</strong></li>
 </ul>
